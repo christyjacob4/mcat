@@ -1,0 +1,70 @@
+.TH MCAT 1 "February 2026" "mcat 0.1.0" "User Commands"
+.SH NAME
+mcat \- cat on steroids
+.SH SYNOPSIS
+.B mcat
+[\fIOPTION\fR]... [\fIFILE\fR]...
+.SH DESCRIPTION
+Concatenate FILE(s) to standard output. With no FILE, or when FILE is -, read standard input.
+.PP
+mcat is a drop-in replacement for cat that additionally understands structured formats
+(Parquet, Avro, ORC, CSV, JSONL) and remote sources (S3, GCS, HTTP).
+.SH OPTIONS
+.TP
+.B \-n, \-\-number
+Number all output lines.
+.TP
+.B \-b, \-\-number\-nonblank
+Number non-blank output lines.
+.TP
+.B \-s, \-\-squeeze\-blank
+Suppress repeated empty output lines.
+.TP
+.B \-A, \-\-show\-all
+Equivalent to \fB\-vET\fR.
+.TP
+.B \-E, \-\-show\-ends
+Display $ at end of each line.
+.TP
+.B \-T, \-\-show\-tabs
+Display TAB characters as ^I.
+.TP
+.B \-v, \-\-show\-nonprinting
+Use ^ and M- notation, except for LFD and TAB.
+.TP
+.B \-e
+Equivalent to \fB\-vE\fR.
+.TP
+.B \-t
+Equivalent to \fB\-vT\fR.
+.TP
+.B \-\-format\fR=\fIFORMAT
+Output format for structured files: table, jsonl, csv, raw.
+.TP
+.B \-\-head\fR=\fIN
+Show first N rows of structured files.
+.TP
+.B \-\-tail\fR=\fIN
+Show last N rows of structured files.
+.TP
+.B \-\-schema
+Print schema of structured files only.
+.TP
+.B \-\-columns\fR=\fICOL1,COL2,...
+Select specific columns from structured files.
+.TP
+.B \-V, \-\-version
+Display version information.
+.SH EXAMPLES
+.nf
+mcat file.txt
+mcat -n file.txt
+mcat data.parquet
+mcat --format jsonl data.parquet
+mcat s3://bucket/data.parquet
+echo hello | mcat
+.fi
+.SH AUTHOR
+Christy Jacob <christyjacob4@users.noreply.github.com>
+.SH LICENSE
+MIT
