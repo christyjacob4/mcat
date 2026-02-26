@@ -164,6 +164,103 @@ tr:hover { background: var(--bg-secondary); }
   margin-bottom: 12px;
 }
 
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* Terminal demos */
+.terminal-demos {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.terminal-window {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: #1e1e1e;
+}
+
+.terminal-header {
+  background: #2d2d2d;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.terminal-header .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot.red { background: #ff5f57; }
+.dot.yellow { background: #ffbd2e; }
+.dot.green { background: #28c840; }
+
+.terminal-title {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-left: 8px;
+}
+
+.terminal-body {
+  padding: 20px;
+  overflow-x: auto;
+}
+
+.terminal-body pre {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.t-prompt { color: #28c840; font-weight: bold; }
+.t-cmd { color: #f0f6fc; }
+.t-border { color: #555; }
+.t-header { color: #ccc; font-weight: bold; }
+.t-key { color: var(--accent); }
+.t-str { color: var(--accent2); }
+.t-num { color: #ffbd2e; }
+.t-type { color: #ffbd2e; }
+.t-meta { color: var(--text-muted); }
+
 /* Footer */
 footer {
   text-align: center;
@@ -177,4 +274,5 @@ footer {
   .examples { grid-template-columns: 1fr; }
   .hero { padding: 60px 0 40px; }
   section { padding: 40px 0; }
+  .tab-btn { padding: 8px 12px; font-size: 0.8rem; }
 }

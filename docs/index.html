@@ -24,14 +24,104 @@
     <!-- Install -->
     <section>
       <h2>Install</h2>
-      <pre><code><span class="comment"># With uv (recommended)</span>
-<span class="cmd">uv tool install mcat</span>
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="macos">macOS</button>
+        <button class="tab-btn" data-tab="linux">Linux</button>
+        <button class="tab-btn" data-tab="windows">Windows</button>
+        <button class="tab-btn" data-tab="brew">Homebrew</button>
+      </div>
+      <div class="tab-content active" id="tab-macos">
+        <pre><code><span class="comment"># Install uv</span>
+<span class="cmd">curl</span> -LsSf https://astral.sh/uv/install.sh | sh
 
-<span class="comment"># With pip</span>
-<span class="cmd">pip install mcat</span>
+<span class="comment"># Install mcat</span>
+<span class="cmd">uv tool install</span> mcat          <span class="comment"># core</span>
+<span class="cmd">uv tool install</span> "mcat[s3]"    <span class="comment"># + S3 / S3-compatible storage</span>
+<span class="cmd">uv tool install</span> "mcat[all]"   <span class="comment"># everything</span></code></pre>
+      </div>
+      <div class="tab-content" id="tab-linux">
+        <pre><code><span class="comment"># Install uv</span>
+<span class="cmd">curl</span> -LsSf https://astral.sh/uv/install.sh | sh
 
-<span class="comment"># With all extras (S3, GCS, Avro)</span>
-<span class="cmd">pip install "mcat[all]"</span></code></pre>
+<span class="comment"># Install mcat</span>
+<span class="cmd">uv tool install</span> mcat
+<span class="cmd">uv tool install</span> "mcat[all]"   <span class="comment"># S3 + GCS + Avro</span></code></pre>
+      </div>
+      <div class="tab-content" id="tab-windows">
+        <pre><code><span class="comment"># Install uv (PowerShell)</span>
+<span class="cmd">powershell</span> -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+<span class="comment"># Install mcat</span>
+<span class="cmd">uv tool install</span> mcat
+<span class="cmd">uv tool install</span> "mcat[all]"</code></pre>
+      </div>
+      <div class="tab-content" id="tab-brew">
+        <pre><code><span class="cmd">brew tap</span> christyjacob4/tap
+<span class="cmd">brew install</span> mcat</code></pre>
+      </div>
+    </section>
+
+    <!-- See it in action -->
+    <section>
+      <h2>See it in action</h2>
+      <div class="terminal-demos">
+
+        <div class="terminal-window">
+          <div class="terminal-header">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+            <span class="terminal-title">mcat — parquet</span>
+          </div>
+          <div class="terminal-body">
+<pre><span class="t-prompt">$</span> <span class="t-cmd">mcat sales_data.parquet</span>
+<span class="t-border">┌─────────────┬──────────┬────────┬───────────┐</span>
+<span class="t-border">│</span> <span class="t-header">name</span>        <span class="t-border">│</span> <span class="t-header">region</span>   <span class="t-border">│</span> <span class="t-header">sales</span>  <span class="t-border">│</span> <span class="t-header">quarter</span>   <span class="t-border">│</span>
+<span class="t-border">├─────────────┼──────────┼────────┼───────────┤</span>
+<span class="t-border">│</span> Alice Chen  <span class="t-border">│</span> APAC     <span class="t-border">│</span> <span class="t-num">94,230</span> <span class="t-border">│</span> Q1 2024   <span class="t-border">│</span>
+<span class="t-border">│</span> Bob Müller  <span class="t-border">│</span> EMEA     <span class="t-border">│</span> <span class="t-num">71,450</span> <span class="t-border">│</span> Q1 2024   <span class="t-border">│</span>
+<span class="t-border">│</span> Carol Smith <span class="t-border">│</span> Americas <span class="t-border">│</span> <span class="t-num">88,920</span> <span class="t-border">│</span> Q1 2024   <span class="t-border">│</span>
+<span class="t-border">│</span> David Park  <span class="t-border">│</span> APAC     <span class="t-border">│</span> <span class="t-num">102,100</span><span class="t-border">│</span> Q2 2024   <span class="t-border">│</span>
+<span class="t-border">│</span> Eve Santos  <span class="t-border">│</span> Americas <span class="t-border">│</span> <span class="t-num">67,800</span> <span class="t-border">│</span> Q2 2024   <span class="t-border">│</span>
+<span class="t-border">└─────────────┴──────────┴────────┴───────────┘</span>
+<span class="t-meta">5 rows · 4 columns · parquet</span></pre>
+          </div>
+        </div>
+
+        <div class="terminal-window">
+          <div class="terminal-header">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+            <span class="terminal-title">mcat — schema</span>
+          </div>
+          <div class="terminal-body">
+<pre><span class="t-prompt">$</span> <span class="t-cmd">mcat --schema warehouse.parquet</span>
+<span class="t-header">Schema</span>  warehouse.parquet
+ <span class="t-key">name</span>       <span class="t-type">STRING</span>
+ <span class="t-key">region</span>     <span class="t-type">STRING</span>
+ <span class="t-key">sales</span>      <span class="t-type">INT64</span>
+ <span class="t-key">quarter</span>    <span class="t-type">STRING</span>
+ <span class="t-key">timestamp</span>  <span class="t-type">TIMESTAMP[us]</span></pre>
+          </div>
+        </div>
+
+        <div class="terminal-window">
+          <div class="terminal-header">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+            <span class="terminal-title">mcat — S3 + JSONL</span>
+          </div>
+          <div class="terminal-body">
+<pre><span class="t-prompt">$</span> <span class="t-cmd">mcat s3://prod-logs/2024/app.jsonl --head 3</span>
+{<span class="t-key">"ts"</span>: <span class="t-str">"2024-01-15T08:23:11Z"</span>, <span class="t-key">"level"</span>: <span class="t-str">"INFO"</span>,  <span class="t-key">"msg"</span>: <span class="t-str">"Server started"</span>, <span class="t-key">"port"</span>: <span class="t-num">8080</span>}
+{<span class="t-key">"ts"</span>: <span class="t-str">"2024-01-15T08:23:12Z"</span>, <span class="t-key">"level"</span>: <span class="t-str">"INFO"</span>,  <span class="t-key">"msg"</span>: <span class="t-str">"Connected to DB"</span>, <span class="t-key">"host"</span>: <span class="t-str">"pg-1"</span>}
+{<span class="t-key">"ts"</span>: <span class="t-str">"2024-01-15T08:23:45Z"</span>, <span class="t-key">"level"</span>: <span class="t-str">"WARN"</span>,  <span class="t-key">"msg"</span>: <span class="t-str">"High memory usage"</span>, <span class="t-key">"pct"</span>: <span class="t-num">87.3</span>}</pre>
+          </div>
+        </div>
+
+      </div>
     </section>
 
     <!-- Usage -->
@@ -62,7 +152,9 @@ echo "hello" | <span class="cmd">mcat</span></code></pre>
           <h3>Remote sources</h3>
           <pre><code><span class="cmd">mcat</span> s3://bucket/data.parquet
 <span class="cmd">mcat</span> gs://bucket/data.parquet
-<span class="cmd">mcat</span> https://example.com/data.csv</code></pre>
+<span class="cmd">mcat</span> https://example.com/data.csv
+<span class="cmd">mcat</span> <span class="flag">--s3-endpoint</span> https://play.min.io \
+  s3://mybucket/data.parquet</code></pre>
         </div>
       </div>
     </section>
@@ -91,14 +183,67 @@ echo "hello" | <span class="cmd">mcat</span></code></pre>
       <p>mcat uses <code>fsspec</code> under the hood for seamless remote file access. No full downloads — streaming and range requests are used where possible.</p>
       <table>
         <thead>
-          <tr><th>Protocol</th><th>Extra needed</th><th>Example</th></tr>
+          <tr><th>Protocol</th><th>Works via</th><th>Extra</th><th>Notes</th></tr>
         </thead>
         <tbody>
-          <tr><td>S3</td><td><code>mcat[s3]</code></td><td><code>s3://my-bucket/data.parquet</code></td></tr>
-          <tr><td>GCS</td><td><code>mcat[gcs]</code></td><td><code>gs://my-bucket/data.parquet</code></td></tr>
-          <tr><td>HTTP/HTTPS</td><td>—</td><td><code>https://example.com/data.csv</code></td></tr>
+          <tr><td><code>s3://</code></td><td>s3fs + boto3</td><td><code>mcat[s3]</code></td><td>AWS S3, MinIO, R2, B2, Spaces</td></tr>
+          <tr><td><code>gs://</code></td><td>gcsfs</td><td><code>mcat[gcs]</code></td><td>Native GCS — richest feature set</td></tr>
+          <tr><td><code>https://</code></td><td>fsspec built-in</td><td>—</td><td>Range requests where supported</td></tr>
+          <tr><td>Any S3-compat</td><td>s3fs + <code>--s3-endpoint</code></td><td><code>mcat[s3]</code></td><td>MinIO, Cloudflare R2, Backblaze B2, DO Spaces</td></tr>
         </tbody>
       </table>
+    </section>
+
+    <!-- Authentication -->
+    <section>
+      <h2>Authentication</h2>
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="auth-aws">AWS S3</button>
+        <button class="tab-btn" data-tab="auth-s3compat">S3-Compatible</button>
+        <button class="tab-btn" data-tab="auth-gcs">Google Cloud</button>
+      </div>
+      <div class="tab-content active" id="tab-auth-aws">
+        <pre><code><span class="comment"># Option 1: AWS CLI (recommended)</span>
+<span class="cmd">aws configure</span>   <span class="comment"># stores in ~/.aws/credentials</span>
+mcat s3://my-bucket/data.parquet
+
+<span class="comment"># Option 2: Environment variables</span>
+<span class="cmd">export</span> AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+<span class="cmd">export</span> AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+<span class="cmd">export</span> AWS_DEFAULT_REGION=us-east-1
+mcat s3://my-bucket/data.parquet
+
+<span class="comment"># Option 3: Named profile</span>
+AWS_PROFILE=myprofile mcat s3://my-bucket/data.parquet
+
+<span class="comment"># Option 4: Temporary session token (MFA, assume-role)</span>
+<span class="cmd">export</span> AWS_SESSION_TOKEN=AQoXnyc4lcK4w4OIAHPOjgWDSB...
+mcat s3://my-bucket/data.parquet</code></pre>
+      </div>
+      <div class="tab-content" id="tab-auth-s3compat">
+        <pre><code><span class="comment"># Via --s3-endpoint flag</span>
+mcat <span class="flag">--s3-endpoint</span> https://play.min.io s3://mybucket/data.parquet
+
+<span class="comment"># Via environment variable</span>
+<span class="cmd">export</span> FSSPEC_S3_ENDPOINT_URL=https://play.min.io
+mcat s3://mybucket/data.parquet
+
+<span class="comment"># Cloudflare R2 example</span>
+mcat <span class="flag">--s3-endpoint</span> https://&lt;account-id&gt;.r2.cloudflarestorage.com s3://bucket/file.parquet
+
+<span class="comment"># MinIO with credentials</span>
+AWS_ACCESS_KEY_ID=minioadmin AWS_SECRET_ACCESS_KEY=minioadmin \
+  mcat <span class="flag">--s3-endpoint</span> http://localhost:9000 s3://mybucket/data.parquet</code></pre>
+      </div>
+      <div class="tab-content" id="tab-auth-gcs">
+        <pre><code><span class="comment"># Option 1: gcloud CLI (recommended)</span>
+<span class="cmd">gcloud auth</span> application-default login
+mcat gs://my-bucket/data.parquet
+
+<span class="comment"># Option 2: Service account key</span>
+<span class="cmd">export</span> GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
+mcat gs://my-bucket/data.parquet</code></pre>
+      </div>
     </section>
 
     <!-- Contributing -->
@@ -119,6 +264,21 @@ uv run mcat --help</code></pre>
     </footer>
 
   </div>
+
+  <script>
+    document.querySelectorAll('.tabs').forEach(tabGroup => {
+      tabGroup.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tabId = btn.dataset.tab;
+          tabGroup.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const section = tabGroup.parentElement;
+          section.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+          section.querySelector('#tab-' + tabId).classList.add('active');
+        });
+      });
+    });
+  </script>
 
 </body>
 </html>
