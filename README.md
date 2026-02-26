@@ -40,9 +40,10 @@ uv tool install mcat
 pip install mcat
 
 # With extras
-pip install "mcat[all]"     # S3 + GCS + Avro
+pip install "mcat[all]"     # S3 + GCS + Azure + Avro + Excel + compression
 pip install "mcat[s3]"      # S3 + S3-compatible (MinIO, R2, B2, Spaces)
-pip install "mcat[cloud]"   # S3 + GCS combined
+pip install "mcat[cloud]"   # S3 + GCS + Azure combined
+pip install "mcat[excel]"   # Excel (.xlsx, .xls) support
 
 # With Homebrew
 brew tap christyjacob4/tap
@@ -134,14 +135,18 @@ mcat data.csv --format jsonl --output data.jsonl
 
 ## Format Support
 
-| Format  | Extensions         | Features                          |
-|---------|--------------------|-----------------------------------|
-| Parquet | `.parquet`, `.pq`  | Stream row groups, schema inspect |
-| ORC     | `.orc`             | Stream stripes                    |
-| Avro    | `.avro`            | Stream blocks (requires `mcat[avro]`) |
-| JSONL   | `.jsonl`, `.ndjson`| Pretty-print each record          |
-| CSV     | `.csv`             | Table with headers                |
-| TSV     | `.tsv`             | Table with headers                |
+| Format    | Extensions           | Features                          |
+|-----------|----------------------|-----------------------------------|
+| Parquet   | `.parquet`, `.pq`    | Stream row groups, schema inspect |
+| ORC       | `.orc`               | Stream stripes                    |
+| Avro      | `.avro`              | Stream blocks (requires `mcat[avro]`) |
+| JSONL     | `.jsonl`, `.ndjson`  | Pretty-print each record          |
+| CSV       | `.csv`               | Table with headers                |
+| TSV       | `.tsv`               | Table with headers                |
+| Excel     | `.xlsx`, `.xls`      | First sheet, requires `mcat[excel]` |
+| Feather   | `.feather`           | Arrow Feather format              |
+| Arrow IPC | `.arrow`             | Arrow IPC streaming format        |
+| JSON      | `.json`              | Array of objects or single object |
 
 Formats are detected by extension first, then by magic bytes (`PAR1`, `ORC`, `Obj\x01`) as a fallback.
 
@@ -160,62 +165,64 @@ Use `--format` to control output:
 |---------------|-------------------------|------------------------------------------|
 | `mcat[s3]`    | `boto3`, `s3fs`         | AWS S3, MinIO, R2, B2, DO Spaces         |
 | `mcat[gcs]`   | `gcsfs`                 | Native GCS (`gs://`) — richest features  |
-| `mcat[cloud]` | `boto3`, `s3fs`, `gcsfs`| S3 + GCS combined                        |
+| `mcat[cloud]` | `boto3`, `s3fs`, `gcsfs`, `adlfs` | S3 + GCS + Azure combined        |
 | `mcat[avro]`  | `fastavro`              | Avro format support                      |
+| `mcat[azure]` | `adlfs`                 | Azure Blob Storage (`az://`, `abfs://`)  |
+| `mcat[excel]` | `openpyxl`, `xlrd`      | Excel .xlsx and .xls support             |
 | `mcat[compress]` | `zstandard`, `lz4`   | zstd and lz4 decompression               |
 | `mcat[all]`   | Everything above        | All formats + all remotes + compression  |
 
 ## Authentication
 
+mcat uses **zero-config auth** — it piggybacks on credentials you've already set up for your cloud provider. No mcat-specific credential flags needed.
+
 ### AWS S3
 
 ```bash
-# Option 1: AWS CLI (recommended)
-aws configure   # stores in ~/.aws/credentials
-mcat s3://my-bucket/data.parquet
-
-# Option 2: Environment variables
-export AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
-export AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-export AWS_DEFAULT_REGION=us-east-1
-mcat s3://my-bucket/data.parquet
-
-# Option 3: Named profile
-AWS_PROFILE=myprofile mcat s3://my-bucket/data.parquet
-
-# Option 4: Temporary session token (MFA, assume-role)
-export AWS_SESSION_TOKEN=AQoXnyc4lcK4w4OIAHPOjgWDSB...
+aws configure   # one-time setup → works everywhere
 mcat s3://my-bucket/data.parquet
 ```
 
-### S3-Compatible Storage (MinIO, Cloudflare R2, Backblaze B2, DigitalOcean Spaces)
+All standard AWS auth methods work automatically: `~/.aws/credentials`, env vars (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`), named profiles (`AWS_PROFILE`), IAM roles, SSO, etc.
+
+### Google Cloud Storage
 
 ```bash
-# Via --s3-endpoint flag
-mcat --s3-endpoint https://play.min.io s3://mybucket/data.parquet
+gcloud auth application-default login   # one-time setup
+mcat gs://my-bucket/data.parquet
+```
 
-# Via environment variable
-export FSSPEC_S3_ENDPOINT_URL=https://play.min.io
+Also supports `GOOGLE_APPLICATION_CREDENTIALS` for service account keys.
+
+### Azure Blob Storage
+
+```bash
+# Set env vars once
+export AZURE_STORAGE_ACCOUNT_NAME=myaccount
+export AZURE_STORAGE_ACCOUNT_KEY=...
+mcat az://mycontainer/data.parquet
+```
+
+Also works with `az login` and `DefaultAzureCredential`.
+
+### S3-Compatible Storage (MinIO, Cloudflare R2, Backblaze B2, DigitalOcean Spaces, Wasabi, Vultr)
+
+```bash
+# Option 1: AWS_ENDPOINT_URL env var (recommended — boto3/botocore 1.29+ official)
+export AWS_ENDPOINT_URL=https://play.min.io
+export AWS_ACCESS_KEY_ID=minioadmin
+export AWS_SECRET_ACCESS_KEY=minioadmin
 mcat s3://mybucket/data.parquet
 
-# Cloudflare R2 example
-mcat --s3-endpoint https://<account-id>.r2.cloudflarestorage.com s3://bucket/file.parquet
+# Option 2: Named profile in ~/.aws/config
+# [profile minio]
+# endpoint_url = https://play.min.io
+# aws_access_key_id = minioadmin
+# aws_secret_access_key = minioadmin
+AWS_PROFILE=minio mcat s3://mybucket/data.parquet
 
-# MinIO with credentials
-AWS_ACCESS_KEY_ID=minioadmin AWS_SECRET_ACCESS_KEY=minioadmin \
-  mcat --s3-endpoint http://localhost:9000 s3://mybucket/data.parquet
-```
-
-### Google Cloud Storage (native gs://)
-
-```bash
-# Option 1: gcloud CLI (recommended)
-gcloud auth application-default login
-mcat gs://my-bucket/data.parquet
-
-# Option 2: Service account key
-export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
-mcat gs://my-bucket/data.parquet
+# Option 3: Per-command --s3-endpoint override
+mcat --s3-endpoint https://play.min.io s3://mybucket/data.parquet
 ```
 
 ## License
