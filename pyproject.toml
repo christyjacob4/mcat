@@ -30,7 +30,8 @@ s3 = ["boto3", "s3fs"]
 gcs = ["gcsfs"]
 avro = ["fastavro"]
 cloud = ["boto3", "s3fs", "gcsfs"]
-all = ["boto3", "s3fs", "gcsfs", "fastavro"]
+compress = ["zstandard", "lz4"]
+all = ["boto3", "s3fs", "gcsfs", "fastavro", "zstandard", "lz4"]
 
 [project.scripts]
 mcat = "mcat.main:app"

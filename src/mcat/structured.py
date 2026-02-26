@@ -332,9 +332,120 @@ _HANDLERS = {
 }
 
 
-def handle_structured(path: str, fmt: str, opts: dict):
+def handle_structured(path: str, fmt: str, opts: dict, file_obj=None):
     """Dispatch to the appropriate structured handler."""
     handler = _HANDLERS.get(fmt)
     if not handler:
         raise ValueError(f"Unknown format: {fmt}")
-    handler(path, opts)
+    if file_obj is not None:
+        # For streaming formats with pre-opened (decompressed) file objects
+        _handle_with_file_obj(path, fmt, opts, file_obj)
+    else:
+        handler(path, opts)
+
+
+def _handle_with_file_obj(path: str, fmt: str, opts: dict, file_obj):
+    """Handle structured format using a pre-opened file object (e.g., decompressed stream)."""
+    import io
+
+    if fmt in ("csv", "tsv"):
+        import csv as csv_mod
+        delimiter = "\t" if fmt == "tsv" else ","
+        text_f = io.TextIOWrapper(file_obj, encoding="utf-8")
+        reader = csv_mod.DictReader(text_f, delimiter=delimiter)
+        col_filter = opts.get("columns")
+
+        if opts.get("schema"):
+            console.print(reader.fieldnames)
+            return
+        if opts.get("count"):
+            count = sum(1 for _ in reader)
+            print(count)
+            return
+
+        limit = opts.get("head")
+        rows: list[dict] = []
+        for record in reader:
+            if col_filter:
+                record = {k: v for k, v in record.items() if k in col_filter}
+            rows.append(record)
+            if limit and len(rows) >= limit:
+                break
+        rows = _apply_head_tail(rows, opts)
+        _output_rows(rows, opts)
+
+    elif fmt == "jsonl":
+        text_f = io.TextIOWrapper(file_obj, encoding="utf-8")
+        col_filter = opts.get("columns")
+
+        if opts.get("count"):
+            count = sum(1 for line in text_f if line.strip())
+            print(count)
+            return
+
+        limit = opts.get("head")
+        rows = []
+        for line in text_f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                obj = json.loads(line)
+            except json.JSONDecodeError:
+                print(line)
+                continue
+            if col_filter:
+                obj = {k: v for k, v in obj.items() if k in col_filter}
+            rows.append(obj)
+            if limit and len(rows) >= limit:
+                break
+        rows = _apply_head_tail(rows, opts)
+        _output_rows(rows, opts)
+
+    elif fmt == "avro":
+        _check_extra("Avro", "fastavro", "avro")
+        import fastavro
+        reader = fastavro.reader(file_obj)
+
+        if opts.get("schema"):
+            console.print_json(json.dumps(reader.writer_schema, default=str))
+            return
+        if opts.get("count"):
+            print(sum(1 for _ in reader))
+            return
+
+        col_filter = opts.get("columns")
+        limit = opts.get("head")
+        rows = []
+        for record in reader:
+            if col_filter:
+                record = {k: v for k, v in record.items() if k in col_filter}
+            rows.append(record)
+            if limit and len(rows) >= limit:
+                break
+        rows = _apply_head_tail(rows, opts)
+        _output_rows(rows, opts)
+
+    elif fmt == "orc":
+        import pyarrow.orc as orc
+        reader = orc.ORCFile(file_obj)
+
+        if opts.get("schema"):
+            console.print(reader.schema)
+            return
+        if opts.get("count"):
+            print(reader.nrows)
+            return
+
+        col_filter = opts.get("columns")
+        table = reader.read(columns=col_filter)
+        rows_dict = table.to_pydict()
+        if not rows_dict:
+            return
+        keys = list(rows_dict.keys())
+        n = len(rows_dict[keys[0]])
+        rows = [{k: rows_dict[k][i] for k in keys} for i in range(n)]
+        rows = _apply_head_tail(rows, opts)
+        _output_rows(rows, opts)
+    else:
+        raise ValueError(f"Unsupported format for file_obj streaming: {fmt}")
