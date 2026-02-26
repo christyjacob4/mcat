@@ -28,10 +28,12 @@ dependencies = [
 [project.optional-dependencies]
 s3 = ["boto3", "s3fs"]
 gcs = ["gcsfs"]
+azure = ["adlfs"]
 avro = ["fastavro"]
-cloud = ["boto3", "s3fs", "gcsfs"]
+excel = ["openpyxl", "xlrd"]
+cloud = ["boto3", "s3fs", "gcsfs", "adlfs"]
 compress = ["zstandard", "lz4"]
-all = ["boto3", "s3fs", "gcsfs", "fastavro", "zstandard", "lz4"]
+all = ["boto3", "s3fs", "gcsfs", "adlfs", "fastavro", "openpyxl", "xlrd", "zstandard", "lz4"]
 
 [project.scripts]
 mcat = "mcat.main:app"
