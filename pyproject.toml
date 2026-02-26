@@ -1,0 +1,46 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mcat"
+version = "0.1.0"
+description = "cat on steroids — unix cat + structured formats + remote sources"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [{ name = "Christy Jacob", email = "christyjacob4@users.noreply.github.com" }]
+keywords = ["cat", "parquet", "avro", "orc", "cli", "data"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Utilities",
+]
+dependencies = [
+    "typer>=0.9",
+    "rich>=13",
+    "pyarrow>=14",
+    "fsspec>=2023.1",
+]
+
+[project.optional-dependencies]
+s3 = ["boto3", "s3fs"]
+gcs = ["gcsfs"]
+avro = ["fastavro"]
+all = ["boto3", "s3fs", "gcsfs", "fastavro"]
+
+[project.scripts]
+mcat = "mcat.main:app"
+
+[project.urls]
+Homepage = "https://github.com/christyjacob4/mcat"
+Documentation = "https://christyjacob4.github.io/mcat"
+Repository = "https://github.com/christyjacob4/mcat"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mcat"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/mcat"]
