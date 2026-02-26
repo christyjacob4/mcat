@@ -75,7 +75,7 @@ def _process_line(raw: bytes, opts: dict, line_num: int, prev_blank: bool) -> tu
     return "".join(parts), line_num, is_blank
 
 
-def cat_files(files: list[str], opts: dict) -> int:
+def cat_files(files: list[str], opts: dict, s3_endpoint: str | None = None) -> int:
     """Concatenate files to stdout, cat-style. Returns exit code."""
     exit_code = 0
     line_num = 1
@@ -92,7 +92,10 @@ def cat_files(files: list[str], opts: dict) -> int:
                 # Use fsspec for remote, regular open for local
                 if "://" in path:
                     import fsspec
-                    f = fsspec.open(path, "rb").open()
+                    so = {}
+                    if s3_endpoint and path.startswith("s3://"):
+                        so["client_kwargs"] = {"endpoint_url": s3_endpoint}
+                    f = fsspec.open(path, "rb", **so).open()
                 else:
                     f = open(path, "rb")
 

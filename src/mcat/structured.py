@@ -12,11 +12,19 @@ from rich.table import Table
 console = Console()
 
 
-def _open_file(path: str, mode: str = "rb"):
+def _storage_options(path: str, s3_endpoint: str | None = None) -> dict:
+    """Build fsspec storage_options for the given path."""
+    opts: dict = {}
+    if s3_endpoint and path.startswith("s3://"):
+        opts["client_kwargs"] = {"endpoint_url": s3_endpoint}
+    return opts
+
+
+def _open_file(path: str, mode: str = "rb", s3_endpoint: str | None = None):
     """Open local or remote file via fsspec."""
     if "://" in path:
         import fsspec
-        return fsspec.open(path, mode).open()
+        return fsspec.open(path, mode, **_storage_options(path, s3_endpoint)).open()
     return open(path, mode)
 
 
@@ -93,7 +101,8 @@ def _handle_parquet(path: str, opts: dict):
 
     if "://" in path:
         import fsspec
-        fs, fpath = fsspec.core.url_to_fs(path)
+        so = _storage_options(path, opts.get("s3_endpoint"))
+        fs, fpath = fsspec.core.url_to_fs(path, **so)
         pf = pq.ParquetFile(fs.open(fpath, "rb"))
     else:
         pf = pq.ParquetFile(path)
@@ -129,7 +138,7 @@ def _handle_parquet(path: str, opts: dict):
 def _handle_orc(path: str, opts: dict):
     import pyarrow.orc as orc
 
-    f = _open_file(path)
+    f = _open_file(path, s3_endpoint=opts.get("s3_endpoint"))
     reader = orc.ORCFile(f)
 
     if opts.get("schema"):
@@ -162,7 +171,7 @@ def _handle_avro(path: str, opts: dict):
         print("mcat: Avro support requires fastavro. Install with: pip install mcat[avro]", file=sys.stderr)
         raise SystemExit(1)
 
-    f = _open_file(path)
+    f = _open_file(path, s3_endpoint=opts.get("s3_endpoint"))
     reader = fastavro.reader(f)
 
     if opts.get("schema"):
@@ -189,7 +198,7 @@ def _handle_avro(path: str, opts: dict):
 # --- JSONL ---
 
 def _handle_jsonl(path: str, opts: dict):
-    f = _open_file(path, "r")
+    f = _open_file(path, "r", s3_endpoint=opts.get("s3_endpoint"))
     col_filter = opts.get("columns")
     limit = opts.get("head")
     rows: list[dict] = []
@@ -219,7 +228,7 @@ def _handle_jsonl(path: str, opts: dict):
 def _handle_csv(path: str, opts: dict, delimiter: str = ","):
     import csv as csv_mod
 
-    f = _open_file(path, "r")
+    f = _open_file(path, "r", s3_endpoint=opts.get("s3_endpoint"))
     reader = csv_mod.DictReader(f, delimiter=delimiter)
 
     col_filter = opts.get("columns")

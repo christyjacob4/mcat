@@ -36,6 +36,7 @@ def main(
     tail: Optional[int] = typer.Option(None, "--tail", help="Show last N rows"),
     schema: bool = typer.Option(False, "--schema", help="Print schema only"),
     columns: Optional[str] = typer.Option(None, "--columns", help="Comma-separated column names"),
+    s3_endpoint: Optional[str] = typer.Option(None, "--s3-endpoint", help="Custom S3 endpoint URL (MinIO, R2, B2, Spaces)", envvar="FSSPEC_S3_ENDPOINT_URL"),
     version: bool = typer.Option(False, "--version", "-V", help="Show version"),
 ) -> None:
     """cat on steroids — read files with support for Parquet, Avro, ORC, CSV, JSONL, and remote sources."""
@@ -67,11 +68,12 @@ def main(
         "tail": tail,
         "schema": schema,
         "columns": columns.split(",") if columns else None,
+        "s3_endpoint": s3_endpoint,
     }
 
     if not files:
         # stdin passthrough
-        cat_files(["-"], cat_opts)
+        cat_files(["-"], cat_opts, s3_endpoint=s3_endpoint)
         return
 
     exit_code = 0
@@ -84,7 +86,7 @@ def main(
                 print(f"mcat: {f}: {exc}", file=sys.stderr)
                 exit_code = 1
         else:
-            rc = cat_files([f], cat_opts)
+            rc = cat_files([f], cat_opts, s3_endpoint=s3_endpoint)
             if rc != 0:
                 exit_code = 1
 

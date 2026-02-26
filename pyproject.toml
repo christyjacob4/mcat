@@ -29,6 +29,7 @@ dependencies = [
 s3 = ["boto3", "s3fs"]
 gcs = ["gcsfs"]
 avro = ["fastavro"]
+cloud = ["boto3", "s3fs", "gcsfs"]
 all = ["boto3", "s3fs", "gcsfs", "fastavro"]
 
 [project.scripts]
