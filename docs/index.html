@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>mcat — cat on steroids</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="container">
+
+    <!-- Hero -->
+    <div class="hero">
+      <h1>🐱 <span>mcat</span></h1>
+      <p class="tagline">cat on steroids — Parquet, Avro, ORC, CSV, JSONL, and remote sources</p>
+      <div class="badges">
+        <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License">
+        <img src="https://img.shields.io/badge/python-3.10+-green.svg" alt="Python 3.10+">
+      </div>
+      <div class="install-cmd" onclick="navigator.clipboard.writeText('uv tool install mcat')">uv tool install mcat</div>
+    </div>
+
+    <!-- Install -->
+    <section>
+      <h2>Install</h2>
+      <pre><code><span class="comment"># With uv (recommended)</span>
+<span class="cmd">uv tool install mcat</span>
+
+<span class="comment"># With pip</span>
+<span class="cmd">pip install mcat</span>
+
+<span class="comment"># With all extras (S3, GCS, Avro)</span>
+<span class="cmd">pip install "mcat[all]"</span></code></pre>
+    </section>
+
+    <!-- Usage -->
+    <section>
+      <h2>Usage</h2>
+      <div class="examples">
+        <div class="example-card">
+          <h3>Drop-in cat replacement</h3>
+          <pre><code><span class="cmd">mcat</span> file.txt
+<span class="cmd">mcat</span> <span class="flag">-n</span> file.txt
+<span class="cmd">mcat</span> <span class="flag">-A</span> file.txt
+echo "hello" | <span class="cmd">mcat</span></code></pre>
+        </div>
+        <div class="example-card">
+          <h3>Structured data</h3>
+          <pre><code><span class="cmd">mcat</span> data.parquet
+<span class="cmd">mcat</span> data.csv
+<span class="cmd">mcat</span> <span class="flag">--format</span> jsonl data.parquet
+<span class="cmd">mcat</span> <span class="flag">--schema</span> data.parquet</code></pre>
+        </div>
+        <div class="example-card">
+          <h3>Filter &amp; slice</h3>
+          <pre><code><span class="cmd">mcat</span> <span class="flag">--head</span> 10 data.parquet
+<span class="cmd">mcat</span> <span class="flag">--tail</span> 5 data.csv
+<span class="cmd">mcat</span> <span class="flag">--columns</span> name,age data.parquet</code></pre>
+        </div>
+        <div class="example-card">
+          <h3>Remote sources</h3>
+          <pre><code><span class="cmd">mcat</span> s3://bucket/data.parquet
+<span class="cmd">mcat</span> gs://bucket/data.parquet
+<span class="cmd">mcat</span> https://example.com/data.csv</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- Format Support -->
+    <section>
+      <h2>Format Support</h2>
+      <table>
+        <thead>
+          <tr><th>Format</th><th>Extensions</th><th>Features</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Parquet</td><td><code>.parquet</code> <code>.pq</code></td><td>Stream row groups, schema inspect</td></tr>
+          <tr><td>ORC</td><td><code>.orc</code></td><td>Stream stripes</td></tr>
+          <tr><td>Avro</td><td><code>.avro</code></td><td>Stream blocks</td></tr>
+          <tr><td>JSONL</td><td><code>.jsonl</code> <code>.ndjson</code></td><td>Pretty-print records</td></tr>
+          <tr><td>CSV</td><td><code>.csv</code></td><td>Table with headers</td></tr>
+          <tr><td>TSV</td><td><code>.tsv</code></td><td>Table with headers</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Remote Sources -->
+    <section>
+      <h2>Remote Sources</h2>
+      <p>mcat uses <code>fsspec</code> under the hood for seamless remote file access. No full downloads — streaming and range requests are used where possible.</p>
+      <table>
+        <thead>
+          <tr><th>Protocol</th><th>Extra needed</th><th>Example</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>S3</td><td><code>mcat[s3]</code></td><td><code>s3://my-bucket/data.parquet</code></td></tr>
+          <tr><td>GCS</td><td><code>mcat[gcs]</code></td><td><code>gs://my-bucket/data.parquet</code></td></tr>
+          <tr><td>HTTP/HTTPS</td><td>—</td><td><code>https://example.com/data.csv</code></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Contributing -->
+    <section>
+      <h2>Contributing</h2>
+      <pre><code><span class="comment"># Clone and install dev dependencies</span>
+git clone https://github.com/christyjacob4/mcat.git
+cd mcat
+uv sync
+
+<span class="comment"># Run locally</span>
+uv run mcat --help</code></pre>
+      <p>PRs welcome. Keep it simple, keep it fast.</p>
+    </section>
+
+    <footer>
+      <p>Built by <a href="https://github.com/christyjacob4">Christy Jacob</a> · MIT License</p>
+    </footer>
+
+  </div>
+
+</body>
+</html>
