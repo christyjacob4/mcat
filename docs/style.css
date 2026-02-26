@@ -22,7 +22,51 @@ body {
   font-family: var(--font-mono);
   font-size: 15px;
   line-height: 1.7;
+  padding-top: 52px;
 }
+
+/* Navbar */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(13, 17, 23, 0.95);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+}
+
+.nav-inner {
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52px;
+}
+
+.nav-logo {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.nav-links {
+  display: flex;
+  gap: 20px;
+}
+
+.nav-links a {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.nav-links a:hover { color: var(--text); }
 
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
@@ -261,6 +305,73 @@ tr:hover { background: var(--bg-secondary); }
 .t-type { color: #ffbd2e; }
 .t-meta { color: var(--text-muted); }
 
+/* Feature Pills */
+.feature-pills {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding: 48px 0 0;
+}
+
+.pill {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 24px 20px;
+  text-align: center;
+}
+
+.pill-icon { font-size: 2rem; margin-bottom: 8px; }
+.pill-title { font-weight: 700; color: #f0f6fc; margin-bottom: 6px; font-size: 1rem; }
+.pill-desc { color: var(--text-muted); font-size: 0.82rem; line-height: 1.5; }
+
+/* Copy button */
+.copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 2px 6px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+pre:hover .copy-btn { opacity: 1; }
+.copy-btn:hover { color: var(--text); border-color: var(--accent); }
+
+/* Typing animation for first terminal demo */
+.typing-cmd {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 2px solid var(--accent2);
+  width: 0;
+  animation: typing 1.2s steps(24) 0.5s forwards, blink-caret 0.6s step-end 4;
+}
+
+.typing-output {
+  opacity: 0;
+  animation: fade-in 0.4s ease 2s forwards;
+}
+
+@keyframes typing {
+  from { width: 0; }
+  to { width: 24ch; border-right-color: transparent; }
+}
+
+@keyframes blink-caret {
+  50% { border-right-color: transparent; }
+}
+
+@keyframes fade-in {
+  to { opacity: 1; }
+}
+
 /* Footer */
 footer {
   text-align: center;
@@ -269,10 +380,25 @@ footer {
   font-size: 0.85rem;
 }
 
+.footer-links {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.footer-links a {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.footer-links a:hover { color: var(--accent); }
+
 @media (max-width: 640px) {
   .hero h1 { font-size: 2.2rem; }
   .examples { grid-template-columns: 1fr; }
   .hero { padding: 60px 0 40px; }
   section { padding: 40px 0; }
   .tab-btn { padding: 8px 12px; font-size: 0.8rem; }
+  .feature-pills { grid-template-columns: 1fr; }
 }

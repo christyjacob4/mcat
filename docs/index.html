@@ -8,6 +8,20 @@
 </head>
 <body>
 
+  <!-- Sticky Navbar -->
+  <nav class="navbar">
+    <div class="nav-inner">
+      <a href="#" class="nav-logo">🐱 mcat</a>
+      <div class="nav-links">
+        <a href="#install">Install</a>
+        <a href="#usage">Usage</a>
+        <a href="#formats">Formats</a>
+        <a href="#auth">Auth</a>
+        <a href="https://github.com/christyjacob4/mcat" target="_blank">GitHub ↗</a>
+      </div>
+    </div>
+  </nav>
+
   <div class="container">
 
     <!-- Hero -->
@@ -17,49 +31,30 @@
       <div class="badges">
         <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License">
         <img src="https://img.shields.io/badge/python-3.10+-green.svg" alt="Python 3.10+">
+        <img src="https://img.shields.io/github/stars/christyjacob4/mcat?style=flat" alt="GitHub Stars">
+        <img src="https://img.shields.io/pypi/v/mcat?style=flat" alt="PyPI Version">
       </div>
       <div class="install-cmd" onclick="navigator.clipboard.writeText('uv tool install mcat')">uv tool install mcat</div>
     </div>
 
-    <!-- Install -->
-    <section>
-      <h2>Install</h2>
-      <div class="tabs">
-        <button class="tab-btn active" data-tab="macos">macOS</button>
-        <button class="tab-btn" data-tab="linux">Linux</button>
-        <button class="tab-btn" data-tab="windows">Windows</button>
-        <button class="tab-btn" data-tab="brew">Homebrew</button>
+    <!-- Feature Pills -->
+    <div class="feature-pills">
+      <div class="pill">
+        <div class="pill-icon">🚀</div>
+        <div class="pill-title">Drop-in cat</div>
+        <div class="pill-desc">Works exactly like cat, every flag supported</div>
       </div>
-      <div class="tab-content active" id="tab-macos">
-        <pre><code><span class="comment"># Install uv</span>
-<span class="cmd">curl</span> -LsSf https://astral.sh/uv/install.sh | sh
-
-<span class="comment"># Install mcat</span>
-<span class="cmd">uv tool install</span> mcat          <span class="comment"># core</span>
-<span class="cmd">uv tool install</span> "mcat[s3]"    <span class="comment"># + S3 / S3-compatible storage</span>
-<span class="cmd">uv tool install</span> "mcat[all]"   <span class="comment"># everything</span></code></pre>
+      <div class="pill">
+        <div class="pill-icon">📦</div>
+        <div class="pill-title">6 formats</div>
+        <div class="pill-desc">Parquet · Avro · ORC · CSV · JSONL auto-detected</div>
       </div>
-      <div class="tab-content" id="tab-linux">
-        <pre><code><span class="comment"># Install uv</span>
-<span class="cmd">curl</span> -LsSf https://astral.sh/uv/install.sh | sh
-
-<span class="comment"># Install mcat</span>
-<span class="cmd">uv tool install</span> mcat
-<span class="cmd">uv tool install</span> "mcat[all]"   <span class="comment"># S3 + GCS + Avro</span></code></pre>
+      <div class="pill">
+        <div class="pill-icon">☁️</div>
+        <div class="pill-title">Any cloud</div>
+        <div class="pill-desc">S3 · GCS · MinIO · R2 · HTTP · More</div>
       </div>
-      <div class="tab-content" id="tab-windows">
-        <pre><code><span class="comment"># Install uv (PowerShell)</span>
-<span class="cmd">powershell</span> -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-
-<span class="comment"># Install mcat</span>
-<span class="cmd">uv tool install</span> mcat
-<span class="cmd">uv tool install</span> "mcat[all]"</code></pre>
-      </div>
-      <div class="tab-content" id="tab-brew">
-        <pre><code><span class="cmd">brew tap</span> christyjacob4/tap
-<span class="cmd">brew install</span> mcat</code></pre>
-      </div>
-    </section>
+    </div>
 
     <!-- See it in action -->
     <section>
@@ -74,8 +69,8 @@
             <span class="terminal-title">mcat — parquet</span>
           </div>
           <div class="terminal-body">
-<pre><span class="t-prompt">$</span> <span class="t-cmd">mcat sales_data.parquet</span>
-<span class="t-border">┌─────────────┬──────────┬────────┬───────────┐</span>
+<pre><span class="t-prompt">$</span> <span class="t-cmd typing-cmd">mcat sales_data.parquet</span>
+<span class="typing-output"><span class="t-border">┌─────────────┬──────────┬────────┬───────────┐</span>
 <span class="t-border">│</span> <span class="t-header">name</span>        <span class="t-border">│</span> <span class="t-header">region</span>   <span class="t-border">│</span> <span class="t-header">sales</span>  <span class="t-border">│</span> <span class="t-header">quarter</span>   <span class="t-border">│</span>
 <span class="t-border">├─────────────┼──────────┼────────┼───────────┤</span>
 <span class="t-border">│</span> Alice Chen  <span class="t-border">│</span> APAC     <span class="t-border">│</span> <span class="t-num">94,230</span> <span class="t-border">│</span> Q1 2024   <span class="t-border">│</span>
@@ -84,7 +79,7 @@
 <span class="t-border">│</span> David Park  <span class="t-border">│</span> APAC     <span class="t-border">│</span> <span class="t-num">102,100</span><span class="t-border">│</span> Q2 2024   <span class="t-border">│</span>
 <span class="t-border">│</span> Eve Santos  <span class="t-border">│</span> Americas <span class="t-border">│</span> <span class="t-num">67,800</span> <span class="t-border">│</span> Q2 2024   <span class="t-border">│</span>
 <span class="t-border">└─────────────┴──────────┴────────┴───────────┘</span>
-<span class="t-meta">5 rows · 4 columns · parquet</span></pre>
+<span class="t-meta">5 rows · 4 columns · parquet</span></span></pre>
           </div>
         </div>
 
@@ -124,8 +119,48 @@
       </div>
     </section>
 
+    <!-- Install -->
+    <section id="install">
+      <h2>Install</h2>
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="macos">macOS</button>
+        <button class="tab-btn" data-tab="linux">Linux</button>
+        <button class="tab-btn" data-tab="windows">Windows</button>
+        <button class="tab-btn" data-tab="brew">Homebrew</button>
+      </div>
+      <div class="tab-content active" id="tab-macos">
+        <pre><code><span class="comment"># Install uv</span>
+<span class="cmd">curl</span> -LsSf https://astral.sh/uv/install.sh | sh
+
+<span class="comment"># Install mcat</span>
+<span class="cmd">uv tool install</span> mcat          <span class="comment"># core</span>
+<span class="cmd">uv tool install</span> "mcat[s3]"    <span class="comment"># + S3 / S3-compatible storage</span>
+<span class="cmd">uv tool install</span> "mcat[all]"   <span class="comment"># everything</span></code></pre>
+      </div>
+      <div class="tab-content" id="tab-linux">
+        <pre><code><span class="comment"># Install uv</span>
+<span class="cmd">curl</span> -LsSf https://astral.sh/uv/install.sh | sh
+
+<span class="comment"># Install mcat</span>
+<span class="cmd">uv tool install</span> mcat
+<span class="cmd">uv tool install</span> "mcat[all]"   <span class="comment"># S3 + GCS + Avro</span></code></pre>
+      </div>
+      <div class="tab-content" id="tab-windows">
+        <pre><code><span class="comment"># Install uv (PowerShell)</span>
+<span class="cmd">powershell</span> -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+<span class="comment"># Install mcat</span>
+<span class="cmd">uv tool install</span> mcat
+<span class="cmd">uv tool install</span> "mcat[all]"</code></pre>
+      </div>
+      <div class="tab-content" id="tab-brew">
+        <pre><code><span class="cmd">brew tap</span> christyjacob4/tap
+<span class="cmd">brew install</span> mcat</code></pre>
+      </div>
+    </section>
+
     <!-- Usage -->
-    <section>
+    <section id="usage">
       <h2>Usage</h2>
       <div class="examples">
         <div class="example-card">
@@ -146,7 +181,8 @@ echo "hello" | <span class="cmd">mcat</span></code></pre>
           <h3>Filter &amp; slice</h3>
           <pre><code><span class="cmd">mcat</span> <span class="flag">--head</span> 10 data.parquet
 <span class="cmd">mcat</span> <span class="flag">--tail</span> 5 data.csv
-<span class="cmd">mcat</span> <span class="flag">--columns</span> name,age data.parquet</code></pre>
+<span class="cmd">mcat</span> <span class="flag">--columns</span> name,age data.parquet
+<span class="cmd">mcat</span> <span class="flag">--count</span> data.parquet</code></pre>
         </div>
         <div class="example-card">
           <h3>Remote sources</h3>
@@ -160,7 +196,7 @@ echo "hello" | <span class="cmd">mcat</span></code></pre>
     </section>
 
     <!-- Format Support -->
-    <section>
+    <section id="formats">
       <h2>Format Support</h2>
       <table>
         <thead>
@@ -195,7 +231,7 @@ echo "hello" | <span class="cmd">mcat</span></code></pre>
     </section>
 
     <!-- Authentication -->
-    <section>
+    <section id="auth">
       <h2>Authentication</h2>
       <div class="tabs">
         <button class="tab-btn active" data-tab="auth-aws">AWS S3</button>
@@ -261,11 +297,18 @@ uv run mcat --help</code></pre>
 
     <footer>
       <p>Built by <a href="https://github.com/christyjacob4">Christy Jacob</a> · MIT License</p>
+      <div class="footer-links">
+        <a href="https://github.com/christyjacob4/mcat">GitHub</a>
+        <a href="https://pypi.org/project/mcat/">PyPI</a>
+        <a href="https://github.com/christyjacob4/mcat/blob/main/CHANGELOG.md">Changelog</a>
+        <a href="https://github.com/christyjacob4/mcat/blob/main/LICENSE">License</a>
+      </div>
     </footer>
 
   </div>
 
   <script>
+    // Tabs
     document.querySelectorAll('.tabs').forEach(tabGroup => {
       tabGroup.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -277,6 +320,25 @@ uv run mcat --help</code></pre>
           section.querySelector('#tab-' + tabId).classList.add('active');
         });
       });
+    });
+
+    // Copy buttons on all <pre> blocks
+    document.querySelectorAll('pre').forEach(pre => {
+      // Skip terminal demos
+      if (pre.closest('.terminal-body')) return;
+      const btn = document.createElement('button');
+      btn.className = 'copy-btn';
+      btn.textContent = '📋';
+      btn.title = 'Copy to clipboard';
+      btn.addEventListener('click', () => {
+        const text = pre.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+          btn.textContent = 'Copied!';
+          setTimeout(() => { btn.textContent = '📋'; }, 1500);
+        });
+      });
+      pre.style.position = 'relative';
+      pre.appendChild(btn);
     });
   </script>
 
