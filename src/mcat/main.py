@@ -40,10 +40,10 @@ def main(
     stats: bool = typer.Option(False, "--stats", help="Print column statistics summary"),
     detect: bool = typer.Option(False, "--detect", help="Print detected format and exit"),
     output: Optional[str] = typer.Option(None, "-o", "--output", help="Write output to file instead of stdout"),
-    s3_endpoint: Optional[str] = typer.Option(None, "--s3-endpoint", help="Custom S3 endpoint URL (MinIO, R2, B2, Spaces)", envvar="FSSPEC_S3_ENDPOINT_URL"),
+    s3_endpoint: Optional[str] = typer.Option(None, "--s3-endpoint", help="Custom S3 endpoint URL (MinIO, R2, B2, Spaces)", envvar="AWS_ENDPOINT_URL"),
     version: bool = typer.Option(False, "--version", "-V", help="Show version"),
 ) -> None:
-    """cat on steroids — read files with support for Parquet, Avro, ORC, CSV, JSONL, and remote sources."""
+    """cat on steroids — read files with support for Parquet, Avro, ORC, CSV, JSONL, Excel, Feather, Arrow IPC, JSON, and remote sources."""
     if version:
         from mcat import __version__
         typer.echo(f"mcat {__version__}")
