@@ -50,6 +50,16 @@
         <div class="pill-desc">Parquet · Avro · ORC · CSV · JSONL auto-detected</div>
       </div>
       <div class="pill">
+        <div class="pill-icon">📊</div>
+        <div class="pill-title">Instant stats</div>
+        <div class="pill-desc">Column profiling from Parquet metadata — zero I/O</div>
+      </div>
+      <div class="pill">
+        <div class="pill-icon">🗜️</div>
+        <div class="pill-title">Transparent compression</div>
+        <div class="pill-desc">gz · zstd · bz2 · lz4 · xz — auto-detected</div>
+      </div>
+      <div class="pill">
         <div class="pill-icon">☁️</div>
         <div class="pill-title">Any cloud</div>
         <div class="pill-desc">S3 · GCS · MinIO · R2 · HTTP · More</div>
@@ -113,6 +123,29 @@
 {<span class="t-key">"ts"</span>: <span class="t-str">"2024-01-15T08:23:11Z"</span>, <span class="t-key">"level"</span>: <span class="t-str">"INFO"</span>,  <span class="t-key">"msg"</span>: <span class="t-str">"Server started"</span>, <span class="t-key">"port"</span>: <span class="t-num">8080</span>}
 {<span class="t-key">"ts"</span>: <span class="t-str">"2024-01-15T08:23:12Z"</span>, <span class="t-key">"level"</span>: <span class="t-str">"INFO"</span>,  <span class="t-key">"msg"</span>: <span class="t-str">"Connected to DB"</span>, <span class="t-key">"host"</span>: <span class="t-str">"pg-1"</span>}
 {<span class="t-key">"ts"</span>: <span class="t-str">"2024-01-15T08:23:45Z"</span>, <span class="t-key">"level"</span>: <span class="t-str">"WARN"</span>,  <span class="t-key">"msg"</span>: <span class="t-str">"High memory usage"</span>, <span class="t-key">"pct"</span>: <span class="t-num">87.3</span>}</pre>
+          </div>
+        </div>
+
+        <div class="terminal-window">
+          <div class="terminal-header">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+            <span class="terminal-title">mcat — stats</span>
+          </div>
+          <div class="terminal-body">
+<pre><span class="t-prompt">$</span> <span class="t-cmd">mcat --stats sales_data.parquet</span>
+<span class="t-header">Stats</span>  sales_data.parquet  (<span class="t-num">1,234,567</span> rows · 8 columns)
+
+ <span class="t-header">Column</span>        <span class="t-header">Type</span>        <span class="t-header">Non-Null</span>    <span class="t-header">Null</span>   <span class="t-header">Min</span>           <span class="t-header">Max</span>           <span class="t-header">Mean</span>          <span class="t-header">Unique</span>
+ <span class="t-border">──────────────────────────────────────────────────────────────────────────────────────────────</span>
+ name          <span class="t-type">STRING</span>      <span class="t-num">1,234,567</span>      0   Aaron         Zoe           —             <span class="t-num">89,432</span>
+ age           <span class="t-type">INT64</span>       <span class="t-num">1,230,000</span>  <span class="t-num">4,567</span>   18            94            <span class="t-num">36.4</span>          —
+ salary        <span class="t-type">FLOAT64</span>     <span class="t-num">1,200,000</span> <span class="t-num">34,567</span>   <span class="t-num">22,000.00</span>     <span class="t-num">450,000.00</span>    <span class="t-num">87,432.10</span>     —
+ region        <span class="t-type">STRING</span>      <span class="t-num">1,234,567</span>      0   APAC          EMEA          —             <span class="t-num">4</span>
+ created_at    <span class="t-type">TIMESTAMP</span>   <span class="t-num">1,234,567</span>      0   2020-01-01    2024-12-31    —             —
+ is_active     <span class="t-type">BOOL</span>        <span class="t-num">1,234,567</span>      0   False         True          —             <span class="t-num">2</span>
+<span class="t-meta">4.2 MB · parquet · compression: SNAPPY</span></pre>
           </div>
         </div>
 
@@ -183,6 +216,19 @@ echo "hello" | <span class="cmd">mcat</span></code></pre>
 <span class="cmd">mcat</span> <span class="flag">--tail</span> 5 data.csv
 <span class="cmd">mcat</span> <span class="flag">--columns</span> name,age data.parquet
 <span class="cmd">mcat</span> <span class="flag">--count</span> data.parquet</code></pre>
+        </div>
+        <div class="example-card">
+          <h3>Column statistics</h3>
+          <pre><code><span class="cmd">mcat</span> <span class="flag">--stats</span> data.parquet
+<span class="cmd">mcat</span> <span class="flag">--stats</span> <span class="flag">--columns</span> age,salary data.parquet
+<span class="cmd">mcat</span> <span class="flag">--stats</span> data.csv.bz2</code></pre>
+        </div>
+        <div class="example-card">
+          <h3>Compressed files</h3>
+          <pre><code><span class="cmd">mcat</span> data.parquet.gz
+<span class="cmd">mcat</span> data.csv.bz2
+<span class="cmd">mcat</span> data.jsonl.zst
+<span class="cmd">mcat</span> s3://bucket/logs.jsonl.gz <span class="flag">--head</span> 100</code></pre>
         </div>
         <div class="example-card">
           <h3>Remote sources</h3>

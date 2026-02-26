@@ -74,6 +74,21 @@ mcat data.parquet --count        # Row count (instant for Parquet)
 mcat data.parquet --detect       # Print detected format
 ```
 
+Column statistics (instant for Parquet — reads metadata only):
+
+```bash
+mcat --stats data.parquet
+mcat --stats --columns age,salary data.parquet   # specific columns only
+```
+
+Transparent compression (gzip, zstd, bz2, lz4, xz — all work):
+
+```bash
+mcat data.parquet.gz
+mcat s3://bucket/logs.jsonl.zst --head 100
+mcat data.csv.bz2 --stats
+```
+
 And remote sources (streaming, no full download):
 
 ```bash
@@ -111,6 +126,7 @@ mcat data.csv --format jsonl --output data.jsonl
 | `--schema` | | Print schema only |
 | `--columns` | | Comma-separated column names |
 | `--count` | `-c` | Print row count only |
+| `--stats` | | Print column statistics summary |
 | `--detect` | | Print detected format and exit |
 | `--output` | `-o` | Write output to file instead of stdout |
 | `--s3-endpoint` | | Custom S3 endpoint URL (MinIO, R2, B2, Spaces) |
@@ -146,7 +162,8 @@ Use `--format` to control output:
 | `mcat[gcs]`   | `gcsfs`                 | Native GCS (`gs://`) — richest features  |
 | `mcat[cloud]` | `boto3`, `s3fs`, `gcsfs`| S3 + GCS combined                        |
 | `mcat[avro]`  | `fastavro`              | Avro format support                      |
-| `mcat[all]`   | Everything above        | All formats + all remotes                |
+| `mcat[compress]` | `zstandard`, `lz4`   | zstd and lz4 decompression               |
+| `mcat[all]`   | Everything above        | All formats + all remotes + compression  |
 
 ## Authentication
 
