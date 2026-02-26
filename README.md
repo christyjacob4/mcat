@@ -4,6 +4,29 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-green.svg)](https://python.org)
+[![GitHub Stars](https://img.shields.io/github/stars/christyjacob4/mcat?style=flat)](https://github.com/christyjacob4/mcat)
+
+---
+
+## Demo
+
+```
+$ mcat sales_data.parquet
+┌─────────────┬──────────┬────────┬─────────┐
+│ name        │ region   │  sales │ quarter │
+├─────────────┼──────────┼────────┼─────────┤
+│ Alice Chen  │ APAC     │ 94,230 │ Q1 2024 │
+│ Bob Müller  │ EMEA     │ 71,450 │ Q1 2024 │
+│ Carol Smith │ Americas │ 88,920 │ Q1 2024 │
+└─────────────┴──────────┴────────┴─────────┘
+3 rows · 4 columns · parquet
+```
+
+---
+
+## Why mcat?
+
+`cat` is everywhere, but it can't read Parquet or Avro. The existing tools (`parquet-cli`, `avro-tools`) are heavy Java dependencies that take ages to install. `mcat` is a single `pip install` (or `uv tool install`) that just works — all GNU cat flags, plus structured format support and remote sources out of the box.
 
 ---
 
@@ -47,6 +70,8 @@ mcat data.csv                    # CSV as table
 mcat data.jsonl --head 10        # First 10 records
 mcat data.parquet --schema       # Print schema only
 mcat data.parquet --columns name,age  # Select columns
+mcat data.parquet --count        # Row count (instant for Parquet)
+mcat data.parquet --detect       # Print detected format
 ```
 
 And remote sources (streaming, no full download):
@@ -60,6 +85,37 @@ mcat https://example.com/data.csv
 mcat --s3-endpoint https://play.min.io s3://mybucket/data.parquet
 ```
 
+Format conversion with `--output`:
+
+```bash
+mcat data.parquet --format jsonl --output data.jsonl
+mcat data.csv --format jsonl --output data.jsonl
+```
+
+## Flag Reference
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--number` | `-n` | Number all output lines |
+| `--number-nonblank` | `-b` | Number non-blank lines only |
+| `--squeeze-blank` | `-s` | Squeeze multiple blank lines |
+| `--show-all` | `-A` | Equivalent to `-vET` |
+| `--show-ends` | `-E` | Display `$` at end of each line |
+| `--show-tabs` | `-T` | Display TAB as `^I` |
+| `--show-nonprinting` | `-v` | Use `^` and `M-` notation |
+| | `-e` | Equivalent to `-vE` |
+| | `-t` | Equivalent to `-vT` |
+| `--format` | | Output format: `table` \| `jsonl` \| `csv` \| `raw` |
+| `--head` | | Show first N rows |
+| `--tail` | | Show last N rows |
+| `--schema` | | Print schema only |
+| `--columns` | | Comma-separated column names |
+| `--count` | `-c` | Print row count only |
+| `--detect` | | Print detected format and exit |
+| `--output` | `-o` | Write output to file instead of stdout |
+| `--s3-endpoint` | | Custom S3 endpoint URL (MinIO, R2, B2, Spaces) |
+| `--version` | `-V` | Show version |
+
 ## Format Support
 
 | Format  | Extensions         | Features                          |
@@ -70,6 +126,8 @@ mcat --s3-endpoint https://play.min.io s3://mybucket/data.parquet
 | JSONL   | `.jsonl`, `.ndjson`| Pretty-print each record          |
 | CSV     | `.csv`             | Table with headers                |
 | TSV     | `.tsv`             | Table with headers                |
+
+Formats are detected by extension first, then by magic bytes (`PAR1`, `ORC`, `Obj\x01`) as a fallback.
 
 ## Output Formats
 
