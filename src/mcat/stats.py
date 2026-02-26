@@ -312,6 +312,65 @@ def stats_streaming(path: str, fmt: str, columns: list[str] | None = None, s3_en
                     yield {k: rows_dict[k][i] for k in keys}
             if not file_obj:
                 f.close()
+        elif fmt == "excel":
+            is_xls = path.split("?")[0].split("#")[0].lower().endswith(".xls")
+            if is_xls:
+                _check_extra("Excel (.xls)", "xlrd", "excel")
+                import xlrd
+                f = file_obj if file_obj else _open_file(path, "rb", s3_endpoint=s3_endpoint)
+                data = f.read()
+                if not file_obj:
+                    f.close()
+                wb = xlrd.open_workbook(file_contents=data)
+                sheet = wb.sheet_by_index(0)
+                headers = [str(sheet.cell_value(0, c)) for c in range(sheet.ncols)]
+                for r in range(1, sheet.nrows):
+                    yield {headers[c]: sheet.cell_value(r, c) for c in range(sheet.ncols)}
+            else:
+                _check_extra("Excel (.xlsx)", "openpyxl", "excel")
+                import openpyxl
+                f = file_obj if file_obj else _open_file(path, "rb", s3_endpoint=s3_endpoint)
+                wb = openpyxl.load_workbook(f, read_only=True, data_only=True)
+                ws = wb.active
+                row_iter = ws.iter_rows(values_only=True)
+                headers = [str(c) if c is not None else "" for c in next(row_iter)]
+                for values in row_iter:
+                    yield {headers[i]: values[i] for i in range(len(headers))}
+                wb.close()
+                if not file_obj:
+                    f.close()
+        elif fmt in ("feather", "arrow"):
+            import pyarrow
+            import pyarrow.feather
+            import pyarrow.ipc
+            f = file_obj if file_obj else _open_file(path, "rb", s3_endpoint=s3_endpoint)
+            clean = path.split("?")[0].split("#")[0].lower()
+            if clean.endswith(".arrow") or fmt == "arrow":
+                table = pyarrow.ipc.open_stream(f).read_all()
+            else:
+                table = pyarrow.feather.read_table(f)
+            rows_dict = table.to_pydict()
+            if rows_dict:
+                keys = list(rows_dict.keys())
+                n = len(rows_dict[keys[0]])
+                for i in range(n):
+                    yield {k: rows_dict[k][i] for k in keys}
+            if not file_obj:
+                f.close()
+        elif fmt == "json":
+            import json
+            if file_obj:
+                import io
+                f = io.TextIOWrapper(file_obj, encoding="utf-8")
+            else:
+                f = _open_file(path, "r", s3_endpoint=s3_endpoint)
+            data = json.load(f)
+            if isinstance(data, dict):
+                data = [data]
+            for row in data:
+                yield row
+            if not file_obj:
+                f.close()
 
     for row in _iter_rows():
         total_rows += 1

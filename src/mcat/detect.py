@@ -13,6 +13,11 @@ _EXT_MAP = {
     ".ndjson": "jsonl",
     ".csv": "csv",
     ".tsv": "tsv",
+    ".xlsx": "excel",
+    ".xls": "excel",
+    ".feather": "feather",
+    ".arrow": "arrow",
+    ".json": "json",
 }
 
 # Magic byte signatures for binary formats
