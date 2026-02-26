@@ -37,6 +37,7 @@ def main(
     schema: bool = typer.Option(False, "--schema", help="Print schema only"),
     columns: Optional[str] = typer.Option(None, "--columns", help="Comma-separated column names"),
     count: bool = typer.Option(False, "-c", "--count", help="Print row count only"),
+    stats: bool = typer.Option(False, "--stats", help="Print column statistics summary"),
     detect: bool = typer.Option(False, "--detect", help="Print detected format and exit"),
     output: Optional[str] = typer.Option(None, "-o", "--output", help="Write output to file instead of stdout"),
     s3_endpoint: Optional[str] = typer.Option(None, "--s3-endpoint", help="Custom S3 endpoint URL (MinIO, R2, B2, Spaces)", envvar="FSSPEC_S3_ENDPOINT_URL"),
@@ -58,6 +59,27 @@ def main(
             fmt_str = fmt or "text"
             typer.echo(f"{f}: {fmt_str} (via {method})")
         raise SystemExit(0)
+
+    # --stats: print column statistics
+    if stats:
+        if not files:
+            typer.echo("mcat: --stats requires at least one file", err=True)
+            raise SystemExit(1)
+        from mcat.stats import handle_stats
+        cols = columns.split(",") if columns else None
+        exit_code = 0
+        for f in files:
+            fmt_detected = detect_format(f)
+            if not fmt_detected or fmt_detected == "text":
+                typer.echo(f"mcat: {f}: --stats requires a structured format", err=True)
+                exit_code = 1
+                continue
+            try:
+                handle_stats(f, fmt_detected, columns=cols, s3_endpoint=s3_endpoint)
+            except Exception as exc:
+                _print_error(f, exc)
+                exit_code = 1
+        raise SystemExit(exit_code)
 
     # Resolve combined flags
     if show_all:
