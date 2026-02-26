@@ -38,8 +38,11 @@ def _open_file(path: str, mode: str = "rb", s3_endpoint: str | None = None):
     if "://" in path:
         if path.startswith("s3://"):
             _check_extra("S3", "s3fs", "s3")
-        elif path.startswith("gs://") or path.startswith("gcs://"):
+        elif path.startswith(("gs://", "gcs://")):
             _check_extra("GCS", "gcsfs", "gcs")
+        elif path.startswith(("az://", "abfs://")):
+            _check_extra("Azure", "adlfs", "azure")
+        # https:// falls through — fsspec has a built-in HTTP filesystem
         import fsspec
         return fsspec.open(path, mode, **_storage_options(path, s3_endpoint)).open()
     return open(path, mode)
@@ -119,8 +122,10 @@ def _handle_parquet(path: str, opts: dict):
     if "://" in path:
         if path.startswith("s3://"):
             _check_extra("S3", "s3fs", "s3")
-        elif path.startswith("gs://") or path.startswith("gcs://"):
+        elif path.startswith(("gs://", "gcs://")):
             _check_extra("GCS", "gcsfs", "gcs")
+        elif path.startswith(("az://", "abfs://")):
+            _check_extra("Azure", "adlfs", "azure")
         import fsspec
         so = _storage_options(path, opts.get("s3_endpoint"))
         fs, fpath = fsspec.core.url_to_fs(path, **so)
@@ -320,6 +325,138 @@ def _handle_csv(path: str, opts: dict, delimiter: str = ","):
     _output_rows(rows, opts)
 
 
+# --- Excel ---
+
+def _handle_excel(path: str, opts: dict):
+    is_xls = path.split("?")[0].split("#")[0].lower().endswith(".xls")
+
+    if is_xls:
+        _check_extra("Excel (.xls)", "xlrd", "excel")
+        import xlrd
+        f = _open_file(path, "rb", s3_endpoint=opts.get("s3_endpoint"))
+        data = f.read()
+        f.close()
+        wb = xlrd.open_workbook(file_contents=data)
+        sheet = wb.sheet_by_index(0)
+        headers = [str(sheet.cell_value(0, c)) for c in range(sheet.ncols)]
+
+        if opts.get("schema"):
+            console.print(headers)
+            return
+        if opts.get("count"):
+            print(sheet.nrows - 1)
+            return
+
+        col_filter = opts.get("columns")
+        cols = _cols_filter(col_filter, headers)
+        rows: list[dict] = []
+        for r in range(1, sheet.nrows):
+            row = {headers[c]: sheet.cell_value(r, c) for c in range(sheet.ncols)}
+            if col_filter:
+                row = {k: v for k, v in row.items() if k in cols}
+            rows.append(row)
+    else:
+        _check_extra("Excel (.xlsx)", "openpyxl", "excel")
+        import openpyxl
+        f = _open_file(path, "rb", s3_endpoint=opts.get("s3_endpoint"))
+        wb = openpyxl.load_workbook(f, read_only=True, data_only=True)
+        ws = wb.active
+        row_iter = ws.iter_rows(values_only=True)
+        headers = [str(c) if c is not None else "" for c in next(row_iter)]
+
+        if opts.get("schema"):
+            console.print(headers)
+            wb.close()
+            f.close()
+            return
+        if opts.get("count"):
+            count = sum(1 for _ in row_iter)
+            print(count)
+            wb.close()
+            f.close()
+            return
+
+        col_filter = opts.get("columns")
+        cols = _cols_filter(col_filter, headers)
+        rows = []
+        for values in row_iter:
+            row = {headers[i]: values[i] for i in range(len(headers))}
+            if col_filter:
+                row = {k: v for k, v in row.items() if k in cols}
+            rows.append(row)
+        wb.close()
+        f.close()
+
+    rows = _apply_head_tail(rows, opts)
+    _output_rows(rows, opts)
+
+
+# --- Feather / Arrow IPC ---
+
+def _handle_feather(path: str, opts: dict):
+    import pyarrow
+    import pyarrow.feather
+    import pyarrow.ipc
+
+    f = _open_file(path, "rb", s3_endpoint=opts.get("s3_endpoint"))
+    clean = path.split("?")[0].split("#")[0].lower()
+    if clean.endswith(".arrow"):
+        table = pyarrow.ipc.open_stream(f).read_all()
+    else:
+        table = pyarrow.feather.read_table(f)
+    f.close()
+
+    if opts.get("schema"):
+        console.print(table.schema)
+        return
+    if opts.get("count"):
+        print(table.num_rows)
+        return
+
+    col_filter = opts.get("columns")
+    if col_filter:
+        table = table.select([c for c in col_filter if c in table.column_names])
+
+    rows_dict = table.to_pydict()
+    if not rows_dict:
+        return
+    keys = list(rows_dict.keys())
+    n = len(rows_dict[keys[0]])
+    rows = [{k: rows_dict[k][i] for k in keys} for i in range(n)]
+
+    rows = _apply_head_tail(rows, opts)
+    _output_rows(rows, opts)
+
+
+# --- JSON ---
+
+def _handle_json(path: str, opts: dict):
+    f = _open_file(path, "r", s3_endpoint=opts.get("s3_endpoint"))
+    data = json.load(f)
+    f.close()
+
+    if isinstance(data, dict):
+        data = [data]
+    if not isinstance(data, list):
+        err_console.print("[bold red]Error:[/bold red] JSON file must contain an array or object")
+        raise SystemExit(1)
+
+    if opts.get("schema"):
+        if data:
+            console.print(list(data[0].keys()))
+        return
+    if opts.get("count"):
+        print(len(data))
+        return
+
+    col_filter = opts.get("columns")
+    if col_filter:
+        data = [{k: v for k, v in row.items() if k in col_filter} for row in data]
+
+    data = _apply_head_tail(data, opts)
+    _output_rows(data, opts)
+
+
 # --- Dispatcher ---
 
 _HANDLERS = {
@@ -329,6 +466,10 @@ _HANDLERS = {
     "jsonl": _handle_jsonl,
     "csv": lambda p, o: _handle_csv(p, o, ","),
     "tsv": lambda p, o: _handle_csv(p, o, "\t"),
+    "excel": _handle_excel,
+    "feather": _handle_feather,
+    "arrow": _handle_feather,
+    "json": _handle_json,
 }
 
 
