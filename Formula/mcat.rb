@@ -4,10 +4,14 @@ class Mcat < Formula
   desc "cat on steroids — Parquet, Avro, ORC, CSV, JSONL and remote sources"
   homepage "https://christyjacob4.github.io/mcat"
   url "https://github.com/christyjacob4/mcat/archive/refs/tags/v0.1.0.tar.gz"
+  # sha256 is filled automatically at release time by the release workflow
   sha256 "PLACEHOLDER"
   license "MIT"
 
   depends_on "python@3.12"
+
+  # Resource sha256 values are filled at release time.
+  # Run `brew audit --new-formula mcat` after publishing to validate.
 
   resource "typer" do
     url "https://files.pythonhosted.org/packages/typer/typer-0.9.0.tar.gz"
@@ -35,5 +39,6 @@ class Mcat < Formula
 
   test do
     assert_match "mcat", shell_output("#{bin}/mcat --version")
+    assert_match "hello", shell_output("echo hello | #{bin}/mcat")
   end
 end

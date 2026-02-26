@@ -999,6 +999,11 @@ all = [
 avro = [
     { name = "fastavro" },
 ]
+cloud = [
+    { name = "boto3" },
+    { name = "gcsfs" },
+    { name = "s3fs" },
+]
 gcs = [
     { name = "gcsfs" },
 ]
@@ -1010,19 +1015,22 @@ s3 = [
 [package.metadata]
 requires-dist = [
     { name = "boto3", marker = "extra == 'all'" },
+    { name = "boto3", marker = "extra == 'cloud'" },
     { name = "boto3", marker = "extra == 's3'" },
     { name = "fastavro", marker = "extra == 'all'" },
     { name = "fastavro", marker = "extra == 'avro'" },
     { name = "fsspec", specifier = ">=2023.1" },
     { name = "gcsfs", marker = "extra == 'all'" },
+    { name = "gcsfs", marker = "extra == 'cloud'" },
     { name = "gcsfs", marker = "extra == 'gcs'" },
     { name = "pyarrow", specifier = ">=14" },
     { name = "rich", specifier = ">=13" },
     { name = "s3fs", marker = "extra == 'all'" },
+    { name = "s3fs", marker = "extra == 'cloud'" },
     { name = "s3fs", marker = "extra == 's3'" },
     { name = "typer", specifier = ">=0.9" },
 ]
-provides-extras = ["s3", "gcs", "avro", "all"]
+provides-extras = ["s3", "gcs", "avro", "cloud", "all"]
 
 [[package]]
 name = "mdurl"

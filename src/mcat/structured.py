@@ -10,6 +10,19 @@ from rich.console import Console
 from rich.table import Table
 
 console = Console()
+err_console = Console(stderr=True)
+
+
+def _check_extra(protocol: str, package: str, extra: str) -> None:
+    """Check if a required extra is installed, raise helpful error if not."""
+    try:
+        __import__(package)
+    except ImportError:
+        err_console.print(
+            f"[bold red]Error:[/bold red] {protocol} support requires mcat[{extra}]. "
+            f"Install with: [bold]uv tool install \"mcat[{extra}]\"[/bold]"
+        )
+        raise SystemExit(1)
 
 
 def _storage_options(path: str, s3_endpoint: str | None = None) -> dict:
@@ -23,6 +36,10 @@ def _storage_options(path: str, s3_endpoint: str | None = None) -> dict:
 def _open_file(path: str, mode: str = "rb", s3_endpoint: str | None = None):
     """Open local or remote file via fsspec."""
     if "://" in path:
+        if path.startswith("s3://"):
+            _check_extra("S3", "s3fs", "s3")
+        elif path.startswith("gs://") or path.startswith("gcs://"):
+            _check_extra("GCS", "gcsfs", "gcs")
         import fsspec
         return fsspec.open(path, mode, **_storage_options(path, s3_endpoint)).open()
     return open(path, mode)
@@ -100,6 +117,10 @@ def _handle_parquet(path: str, opts: dict):
     import pyarrow.parquet as pq
 
     if "://" in path:
+        if path.startswith("s3://"):
+            _check_extra("S3", "s3fs", "s3")
+        elif path.startswith("gs://") or path.startswith("gcs://"):
+            _check_extra("GCS", "gcsfs", "gcs")
         import fsspec
         so = _storage_options(path, opts.get("s3_endpoint"))
         fs, fpath = fsspec.core.url_to_fs(path, **so)
@@ -111,14 +132,39 @@ def _handle_parquet(path: str, opts: dict):
         console.print(pf.schema_arrow)
         return
 
+    # --count: use metadata for instant row count
+    if opts.get("count"):
+        print(pf.metadata.num_rows)
+        return
+
     col_filter = opts.get("columns")
-    rows: list[dict] = []
+
+    # Smart --tail for Parquet: read only the last row group(s) needed
+    if opts.get("tail") and not opts.get("head"):
+        tail_n = opts["tail"]
+        total_rgs = pf.metadata.num_row_groups
+        rows: list[dict] = []
+        # Read row groups from the end
+        for i in range(total_rgs - 1, -1, -1):
+            rg = pf.read_row_group(i, columns=col_filter)
+            batch_rows = rg.to_pydict()
+            if batch_rows:
+                keys = list(batch_rows.keys())
+                n = len(batch_rows[keys[0]])
+                chunk = [{k: batch_rows[k][j] for k in keys} for j in range(n)]
+                rows = chunk + rows
+                if len(rows) >= tail_n:
+                    rows = rows[-tail_n:]
+                    break
+        _output_rows(rows, opts)
+        return
+
     limit = opts.get("head")
+    rows = []
 
     for i in range(pf.metadata.num_row_groups):
         rg = pf.read_row_group(i, columns=col_filter)
         batch_rows = rg.to_pydict()
-        # Convert columnar to row-oriented
         if batch_rows:
             keys = list(batch_rows.keys())
             n = len(batch_rows[keys[0]])
@@ -146,6 +192,11 @@ def _handle_orc(path: str, opts: dict):
         f.close()
         return
 
+    if opts.get("count"):
+        print(reader.nrows)
+        f.close()
+        return
+
     col_filter = opts.get("columns")
     table = reader.read(columns=col_filter)
     rows_dict = table.to_pydict()
@@ -165,17 +216,20 @@ def _handle_orc(path: str, opts: dict):
 # --- Avro ---
 
 def _handle_avro(path: str, opts: dict):
-    try:
-        import fastavro
-    except ImportError:
-        print("mcat: Avro support requires fastavro. Install with: pip install mcat[avro]", file=sys.stderr)
-        raise SystemExit(1)
+    _check_extra("Avro", "fastavro", "avro")
+    import fastavro
 
     f = _open_file(path, s3_endpoint=opts.get("s3_endpoint"))
     reader = fastavro.reader(f)
 
     if opts.get("schema"):
         console.print_json(json.dumps(reader.writer_schema, default=str))
+        f.close()
+        return
+
+    if opts.get("count"):
+        count = sum(1 for _ in reader)
+        print(count)
         f.close()
         return
 
@@ -201,6 +255,13 @@ def _handle_jsonl(path: str, opts: dict):
     f = _open_file(path, "r", s3_endpoint=opts.get("s3_endpoint"))
     col_filter = opts.get("columns")
     limit = opts.get("head")
+
+    if opts.get("count"):
+        count = sum(1 for line in f if line.strip())
+        print(count)
+        f.close()
+        return
+
     rows: list[dict] = []
 
     for line in f:
@@ -234,8 +295,13 @@ def _handle_csv(path: str, opts: dict, delimiter: str = ","):
     col_filter = opts.get("columns")
 
     if opts.get("schema"):
-        # Print fieldnames
         console.print(reader.fieldnames)
+        f.close()
+        return
+
+    if opts.get("count"):
+        count = sum(1 for _ in reader)
+        print(count)
         f.close()
         return
 
