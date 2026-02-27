@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 from typing import Any
 
@@ -96,6 +97,20 @@ def _print_csv(rows: list[dict], columns: list[str] | None = None):
         writer.writerow(row)
 
 
+def _grep_rows(rows: list[dict], pattern: str, columns: list[str] | None = None) -> list[dict]:
+    """Filter rows where any (or specified) column values match a regex pattern."""
+    compiled = re.compile(pattern, re.IGNORECASE)
+    result = []
+    for row in rows:
+        search_cols = columns if columns else list(row.keys())
+        for col in search_cols:
+            val = row.get(col)
+            if val is not None and compiled.search(str(val)):
+                result.append(row)
+                break
+    return result
+
+
 def _sample_rows(rows: list[dict], n: int) -> list[dict]:
     """Return a random sample of *n* rows."""
     import random
@@ -119,6 +134,8 @@ def _sort_rows(rows: list[dict], sort_spec: str) -> list[dict]:
 
 def _output_rows(rows: list[dict], opts: dict):
     """Output rows in the requested format."""
+    if opts.get("grep"):
+        rows = _grep_rows(rows, opts["grep"])
     sample_n = opts.get("sample")
     if sample_n is not None:
         rows = _sample_rows(rows, sample_n)
