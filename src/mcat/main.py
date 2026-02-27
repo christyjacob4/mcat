@@ -44,6 +44,7 @@ def main(
     stats: bool = typer.Option(False, "--stats", help="Print column statistics summary"),
     diff: bool = typer.Option(False, "--diff", help="Compare two structured files side by side"),
     detect: bool = typer.Option(False, "--detect", help="Print detected format and exit"),
+    sort: Optional[str] = typer.Option(None, "--sort", help="Sort by column(s). Prefix with '-' for descending (e.g., 'age' or '-age,name')"),
     output: Optional[str] = typer.Option(None, "-o", "--output", help="Write output to file instead of stdout"),
     s3_endpoint: Optional[str] = typer.Option(None, "--s3-endpoint", help="Custom S3 endpoint URL (MinIO, R2, B2, Spaces)", envvar="AWS_ENDPOINT_URL"),
     pager: bool = typer.Option(False, "--pager", help="Pipe output through pager (less/more)"),
@@ -162,6 +163,7 @@ def main(
         "count": count,
         "output": output,
         "query": query,
+        "sort": sort,
     }
 
     # Handle --output: redirect stdout to file

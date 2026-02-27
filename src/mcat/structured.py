@@ -104,11 +104,28 @@ def _sample_rows(rows: list[dict], n: int) -> list[dict]:
     return random.sample(rows, n)
 
 
+def _sort_rows(rows: list[dict], sort_spec: str) -> list[dict]:
+    """Sort rows by column specification. '-col' for descending."""
+    if not sort_spec or not rows:
+        return rows
+    sort_keys = [s.strip() for s in sort_spec.split(",")]
+    # Build sort: parse each key for direction, apply in reverse for stable multi-key sort
+    for key in reversed(sort_keys):
+        desc = key.startswith("-")
+        col = key.lstrip("-")
+        rows = sorted(rows, key=lambda r, c=col: (r.get(c) is None, r.get(c, "")), reverse=desc)
+    return rows
+
+
 def _output_rows(rows: list[dict], opts: dict):
     """Output rows in the requested format."""
     sample_n = opts.get("sample")
     if sample_n is not None:
         rows = _sample_rows(rows, sample_n)
+    sort_spec = opts.get("sort")
+    if sort_spec:
+        rows = _sort_rows(rows, sort_spec)
+
     fmt = opts.get("format") or "table"
     columns = opts.get("columns")
 
