@@ -70,8 +70,18 @@ def _print_csv(rows: list[dict], columns: list[str] | None = None):
         writer.writerow(row)
 
 
+def _sample_rows(rows: list[dict], n: int) -> list[dict]:
+    """Return a random sample of *n* rows."""
+    import random
+    if n >= len(rows):
+        return rows
+    return random.sample(rows, n)
+
+
 def _output_rows(rows: list[dict], opts: dict):
     """Output rows in the requested format."""
+    if opts.get("sample"):
+        rows = _sample_rows(rows, opts["sample"])
     fmt = opts.get("format") or "table"
     columns = opts.get("columns")
 
