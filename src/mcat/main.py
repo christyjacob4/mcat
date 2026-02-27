@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import sys
+from contextlib import nullcontext
 from typing import Optional
 
 import typer
 
 from mcat.cat_core import cat_files
 from mcat.detect import detect_format, detect_format_verbose
+from mcat.pager import pager_context
 from mcat.structured import handle_structured
 
 app_typer = typer.Typer(add_completion=False, pretty_exceptions_enable=False)
@@ -41,6 +43,7 @@ def main(
     detect: bool = typer.Option(False, "--detect", help="Print detected format and exit"),
     output: Optional[str] = typer.Option(None, "-o", "--output", help="Write output to file instead of stdout"),
     s3_endpoint: Optional[str] = typer.Option(None, "--s3-endpoint", help="Custom S3 endpoint URL (MinIO, R2, B2, Spaces)", envvar="AWS_ENDPOINT_URL"),
+    pager: bool = typer.Option(False, "--pager", help="Pipe output through pager (less/more)"),
     version: bool = typer.Option(False, "--version", "-V", help="Show version"),
 ) -> None:
     """cat on steroids — read files with support for Parquet, Avro, ORC, CSV, JSONL, Excel, Feather, Arrow IPC, JSON, and remote sources."""
@@ -145,114 +148,119 @@ def main(
             typer.echo(f"mcat: {output}: {exc}", err=True)
             raise SystemExit(1)
 
+    # Use pager when --pager is set and not writing to file
+    use_pager = pager and not output
+    pager_ctx = pager_context() if use_pager else nullcontext()
+
     try:
-        if not files:
-            # stdin passthrough
-            cat_files(["-"], cat_opts, s3_endpoint=s3_endpoint)
-            return
+        with pager_ctx:
+            if not files:
+                # stdin passthrough
+                cat_files(["-"], cat_opts, s3_endpoint=s3_endpoint)
+                return
 
-        from mcat.compression import detect_compression, strip_compression_ext, decompress_open
+            from mcat.compression import detect_compression, strip_compression_ext, decompress_open
 
-        exit_code = 0
-        for f in files:
-            comp = detect_compression(f)
+            exit_code = 0
+            for f in files:
+                comp = detect_compression(f)
 
-            # Handle tar archives
-            if comp == "tar":
-                typer.echo(f"mcat: {f}: Compressed archive detected. Use tar -tzf to list contents.", err=True)
-                exit_code = 1
-                continue
+                # Handle tar archives
+                if comp == "tar":
+                    typer.echo(f"mcat: {f}: Compressed archive detected. Use tar -tzf to list contents.", err=True)
+                    exit_code = 1
+                    continue
 
-            fmt = detect_format(f)
+                fmt = detect_format(f)
 
-            if comp and comp != "tar" and fmt and fmt != "text":
-                # Compressed structured file — decompress and handle
-                try:
-                    from mcat.structured import _open_file
-                    raw_f = _open_file(f, "rb", s3_endpoint=s3_endpoint)
-                    decompressed = decompress_open(raw_f, comp)
+                if comp and comp != "tar" and fmt and fmt != "text":
+                    # Compressed structured file — decompress and handle
+                    try:
+                        from mcat.structured import _open_file
+                        raw_f = _open_file(f, "rb", s3_endpoint=s3_endpoint)
+                        decompressed = decompress_open(raw_f, comp)
 
-                    if fmt == "parquet":
-                        # Parquet needs random access — read fully into memory
-                        import io
-                        import pyarrow.parquet as pq
-                        data = decompressed.read()
-                        buf = io.BytesIO(data)
-                        pf = pq.ParquetFile(buf)
+                        if fmt == "parquet":
+                            # Parquet needs random access — read fully into memory
+                            import io
+                            import pyarrow.parquet as pq
+                            data = decompressed.read()
+                            buf = io.BytesIO(data)
+                            pf = pq.ParquetFile(buf)
 
-                        if struct_opts.get("schema"):
-                            from rich.console import Console
-                            Console().print(pf.schema_arrow)
-                        elif struct_opts.get("count"):
-                            print(pf.metadata.num_rows)
-                        elif stats:
-                            from mcat.stats import handle_stats
-                            cols = columns.split(",") if columns else None
-                            handle_stats(f, fmt, columns=cols, s3_endpoint=s3_endpoint)
+                            if struct_opts.get("schema"):
+                                from rich.console import Console
+                                Console().print(pf.schema_arrow)
+                            elif struct_opts.get("count"):
+                                print(pf.metadata.num_rows)
+                            elif stats:
+                                from mcat.stats import handle_stats
+                                cols = columns.split(",") if columns else None
+                                handle_stats(f, fmt, columns=cols, s3_endpoint=s3_endpoint)
+                            else:
+                                # Use normal parquet handler on the buffer
+                                from mcat.structured import _handle_parquet
+                                # Save and restore — hack: write to temp
+                                import tempfile, os
+                                tmp = tempfile.NamedTemporaryFile(suffix=".parquet", delete=False)
+                                tmp.write(data)
+                                tmp.close()
+                                try:
+                                    _handle_parquet(tmp.name, struct_opts)
+                                finally:
+                                    os.unlink(tmp.name)
                         else:
-                            # Use normal parquet handler on the buffer
-                            from mcat.structured import _handle_parquet
-                            # Save and restore — hack: write to temp
-                            import tempfile, os
-                            tmp = tempfile.NamedTemporaryFile(suffix=".parquet", delete=False)
-                            tmp.write(data)
-                            tmp.close()
-                            try:
-                                _handle_parquet(tmp.name, struct_opts)
-                            finally:
-                                os.unlink(tmp.name)
-                    else:
-                        # For streaming formats, pass decompressed file object
-                        handle_structured(f, fmt, struct_opts, file_obj=decompressed)
+                            # For streaming formats, pass decompressed file object
+                            handle_structured(f, fmt, struct_opts, file_obj=decompressed)
 
+                        try:
+                            decompressed.close()
+                        except Exception:
+                            pass
+                        try:
+                            raw_f.close()
+                        except Exception:
+                            pass
+                    except Exception as exc:
+                        _print_error(f, exc)
+                        exit_code = 1
+                elif comp and (not fmt or fmt == "text"):
+                    # Compressed text file — decompress and cat
                     try:
-                        decompressed.close()
-                    except Exception:
-                        pass
+                        from mcat.structured import _open_file
+                        raw_f = _open_file(f, "rb", s3_endpoint=s3_endpoint)
+                        decompressed = decompress_open(raw_f, comp)
+                        # Write decompressed content to stdout
+                        stdout_buf = sys.stdout.buffer
+                        while True:
+                            chunk = decompressed.read(65536)
+                            if not chunk:
+                                break
+                            stdout_buf.write(chunk)
+                        stdout_buf.flush()
+                        try:
+                            decompressed.close()
+                        except Exception:
+                            pass
+                        try:
+                            raw_f.close()
+                        except Exception:
+                            pass
+                    except Exception as exc:
+                        _print_error(f, exc)
+                        exit_code = 1
+                elif fmt and (fmt != "text"):
                     try:
-                        raw_f.close()
-                    except Exception:
-                        pass
-                except Exception as exc:
-                    _print_error(f, exc)
-                    exit_code = 1
-            elif comp and (not fmt or fmt == "text"):
-                # Compressed text file — decompress and cat
-                try:
-                    from mcat.structured import _open_file
-                    raw_f = _open_file(f, "rb", s3_endpoint=s3_endpoint)
-                    decompressed = decompress_open(raw_f, comp)
-                    # Write decompressed content to stdout
-                    stdout_buf = sys.stdout.buffer
-                    while True:
-                        chunk = decompressed.read(65536)
-                        if not chunk:
-                            break
-                        stdout_buf.write(chunk)
-                    stdout_buf.flush()
-                    try:
-                        decompressed.close()
-                    except Exception:
-                        pass
-                    try:
-                        raw_f.close()
-                    except Exception:
-                        pass
-                except Exception as exc:
-                    _print_error(f, exc)
-                    exit_code = 1
-            elif fmt and (fmt != "text"):
-                try:
-                    handle_structured(f, fmt, struct_opts)
-                except Exception as exc:
-                    _print_error(f, exc)
-                    exit_code = 1
-            else:
-                rc = cat_files([f], cat_opts, s3_endpoint=s3_endpoint)
-                if rc != 0:
-                    exit_code = 1
+                        handle_structured(f, fmt, struct_opts)
+                    except Exception as exc:
+                        _print_error(f, exc)
+                        exit_code = 1
+                else:
+                    rc = cat_files([f], cat_opts, s3_endpoint=s3_endpoint)
+                    if rc != 0:
+                        exit_code = 1
 
-        raise SystemExit(exit_code)
+            raise SystemExit(exit_code)
     finally:
         if output_file:
             sys.stdout = original_stdout
