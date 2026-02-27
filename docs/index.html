@@ -166,25 +166,21 @@
 <span class="cmd">curl</span> -LsSf https://astral.sh/uv/install.sh | sh
 
 <span class="comment"># Install mcat</span>
-<span class="cmd">uv tool install</span> mcat          <span class="comment"># core</span>
-<span class="cmd">uv tool install</span> "mcat[s3]"    <span class="comment"># + S3 / S3-compatible storage</span>
-<span class="cmd">uv tool install</span> "mcat[all]"   <span class="comment"># everything</span></code></pre>
+<span class="cmd">uv tool install</span> mcat</code></pre>
       </div>
       <div class="tab-content" id="tab-linux">
         <pre><code><span class="comment"># Install uv</span>
 <span class="cmd">curl</span> -LsSf https://astral.sh/uv/install.sh | sh
 
 <span class="comment"># Install mcat</span>
-<span class="cmd">uv tool install</span> mcat
-<span class="cmd">uv tool install</span> "mcat[all]"   <span class="comment"># S3 + GCS + Avro</span></code></pre>
+<span class="cmd">uv tool install</span> mcat</code></pre>
       </div>
       <div class="tab-content" id="tab-windows">
         <pre><code><span class="comment"># Install uv (PowerShell)</span>
 <span class="cmd">powershell</span> -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 
 <span class="comment"># Install mcat</span>
-<span class="cmd">uv tool install</span> mcat
-<span class="cmd">uv tool install</span> "mcat[all]"</code></pre>
+<span class="cmd">uv tool install</span> mcat</code></pre>
       </div>
       <div class="tab-content" id="tab-brew">
         <pre><code><span class="cmd">brew tap</span> christyjacob4/tap
@@ -265,13 +261,13 @@ echo "hello" | <span class="cmd">mcat</span></code></pre>
       <p>mcat uses <code>fsspec</code> under the hood for seamless remote file access. No full downloads — streaming and range requests are used where possible.</p>
       <table>
         <thead>
-          <tr><th>Protocol</th><th>Works via</th><th>Extra</th><th>Notes</th></tr>
+          <tr><th>Protocol</th><th>Works via</th><th>Notes</th></tr>
         </thead>
         <tbody>
-          <tr><td><code>s3://</code></td><td>s3fs + boto3</td><td><code>mcat[s3]</code></td><td>AWS S3, MinIO, R2, B2, Spaces</td></tr>
-          <tr><td><code>gs://</code></td><td>gcsfs</td><td><code>mcat[gcs]</code></td><td>Native GCS — richest feature set</td></tr>
-          <tr><td><code>https://</code></td><td>fsspec built-in</td><td>—</td><td>Range requests where supported</td></tr>
-          <tr><td>Any S3-compat</td><td>s3fs + <code>--s3-endpoint</code></td><td><code>mcat[s3]</code></td><td>MinIO, Cloudflare R2, Backblaze B2, DO Spaces</td></tr>
+          <tr><td><code>s3://</code></td><td>s3fs + boto3</td><td>AWS S3, MinIO, R2, B2, Spaces</td></tr>
+          <tr><td><code>gs://</code></td><td>gcsfs</td><td>Native GCS — richest feature set</td></tr>
+          <tr><td><code>https://</code></td><td>fsspec built-in</td><td>Range requests where supported</td></tr>
+          <tr><td>Any S3-compat</td><td>s3fs + <code>--s3-endpoint</code></td><td>MinIO, Cloudflare R2, Backblaze B2, DO Spaces</td></tr>
         </tbody>
       </table>
     </section>

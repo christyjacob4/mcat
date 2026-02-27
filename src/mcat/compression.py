@@ -82,27 +82,11 @@ def decompress_open(file_obj: BinaryIO, compression: str) -> BinaryIO:
         import lzma
         return lzma.open(file_obj, "rb")
     elif compression == "zstd":
-        try:
-            import zstandard
-            reader = zstandard.ZstdDecompressor().stream_reader(file_obj)
-            return reader
-        except ImportError:
-            from rich.console import Console
-            Console(stderr=True).print(
-                "[bold red]Error:[/bold red] zstd support requires mcat[compress]. "
-                "Install with: [bold]uv tool install \"mcat[compress]\"[/bold]"
-            )
-            raise SystemExit(1)
+        import zstandard
+        reader = zstandard.ZstdDecompressor().stream_reader(file_obj)
+        return reader
     elif compression == "lz4":
-        try:
-            import lz4.frame
-            return lz4.frame.open(file_obj, "rb")
-        except ImportError:
-            from rich.console import Console
-            Console(stderr=True).print(
-                "[bold red]Error:[/bold red] lz4 support requires mcat[compress]. "
-                "Install with: [bold]uv tool install \"mcat[compress]\"[/bold]"
-            )
-            raise SystemExit(1)
+        import lz4.frame
+        return lz4.frame.open(file_obj, "rb")
     else:
         raise ValueError(f"Unsupported compression: {compression}")

@@ -39,12 +39,6 @@ uv tool install mcat
 # Or with pip
 pip install mcat
 
-# With extras
-pip install "mcat[all]"     # S3 + GCS + Azure + Avro + Excel + compression
-pip install "mcat[s3]"      # S3 + S3-compatible (MinIO, R2, B2, Spaces)
-pip install "mcat[cloud]"   # S3 + GCS + Azure combined
-pip install "mcat[excel]"   # Excel (.xlsx, .xls) support
-
 # With Homebrew
 brew tap christyjacob4/tap
 brew install mcat
@@ -139,11 +133,11 @@ mcat data.csv --format jsonl --output data.jsonl
 |-----------|----------------------|-----------------------------------|
 | Parquet   | `.parquet`, `.pq`    | Stream row groups, schema inspect |
 | ORC       | `.orc`               | Stream stripes                    |
-| Avro      | `.avro`              | Stream blocks (requires `mcat[avro]`) |
+| Avro      | `.avro`              | Stream blocks                         |
 | JSONL     | `.jsonl`, `.ndjson`  | Pretty-print each record          |
 | CSV       | `.csv`               | Table with headers                |
 | TSV       | `.tsv`               | Table with headers                |
-| Excel     | `.xlsx`, `.xls`      | First sheet, requires `mcat[excel]` |
+| Excel     | `.xlsx`, `.xls`      | First sheet                           |
 | Feather   | `.feather`           | Arrow Feather format              |
 | Arrow IPC | `.arrow`             | Arrow IPC streaming format        |
 | JSON      | `.json`              | Array of objects or single object |
@@ -158,19 +152,6 @@ Use `--format` to control output:
 - `jsonl` — One JSON object per line
 - `csv` — CSV with headers
 - `raw` — Python repr
-
-## Optional Extras
-
-| Extra         | Adds                    | Notes                                    |
-|---------------|-------------------------|------------------------------------------|
-| `mcat[s3]`    | `boto3`, `s3fs`         | AWS S3, MinIO, R2, B2, DO Spaces         |
-| `mcat[gcs]`   | `gcsfs`                 | Native GCS (`gs://`) — richest features  |
-| `mcat[cloud]` | `boto3`, `s3fs`, `gcsfs`, `adlfs` | S3 + GCS + Azure combined        |
-| `mcat[avro]`  | `fastavro`              | Avro format support                      |
-| `mcat[azure]` | `adlfs`                 | Azure Blob Storage (`az://`, `abfs://`)  |
-| `mcat[excel]` | `openpyxl`, `xlrd`      | Excel .xlsx and .xls support             |
-| `mcat[compress]` | `zstandard`, `lz4`   | zstd and lz4 decompression               |
-| `mcat[all]`   | Everything above        | All formats + all remotes + compression  |
 
 ## Authentication
 
