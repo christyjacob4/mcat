@@ -40,6 +40,7 @@ def main(
     columns: Optional[str] = typer.Option(None, "--columns", help="Comma-separated column names"),
     count: bool = typer.Option(False, "-c", "--count", help="Print row count only"),
     stats: bool = typer.Option(False, "--stats", help="Print column statistics summary"),
+    diff: bool = typer.Option(False, "--diff", help="Compare two structured files side by side"),
     detect: bool = typer.Option(False, "--detect", help="Print detected format and exit"),
     output: Optional[str] = typer.Option(None, "-o", "--output", help="Write output to file instead of stdout"),
     s3_endpoint: Optional[str] = typer.Option(None, "--s3-endpoint", help="Custom S3 endpoint URL (MinIO, R2, B2, Spaces)", envvar="AWS_ENDPOINT_URL"),
@@ -107,6 +108,19 @@ def main(
                 _print_error(f, exc)
                 exit_code = 1
         raise SystemExit(exit_code)
+
+    # --diff: compare two structured files side by side
+    if diff:
+        if not files or len(files) != 2:
+            typer.echo("mcat: --diff requires exactly 2 files", err=True)
+            raise SystemExit(1)
+        struct_opts = {
+            "columns": columns.split(",") if columns else None,
+            "s3_endpoint": s3_endpoint,
+        }
+        from mcat.diff import diff_files
+        diff_files(files[0], files[1], struct_opts)
+        raise SystemExit(0)
 
     # Resolve combined flags
     if show_all:

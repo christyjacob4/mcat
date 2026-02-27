@@ -69,6 +69,13 @@ mcat data.parquet --count        # Row count (instant for Parquet)
 mcat data.parquet --detect       # Print detected format
 ```
 
+Comparing two structured files:
+
+```bash
+mcat --diff old.csv new.csv
+mcat --diff prod.parquet staging.parquet --columns name,age
+```
+
 Column statistics (instant for Parquet — reads metadata only):
 
 ```bash
@@ -130,6 +137,7 @@ PAGER="more" mcat data.parquet --pager   # use 'more' instead of 'less'
 | `--columns` | | Comma-separated column names |
 | `--count` | `-c` | Print row count only |
 | `--stats` | | Print column statistics summary |
+| `--diff` | | Compare two structured files side by side |
 | `--detect` | | Print detected format and exit |
 | `--output` | `-o` | Write output to file instead of stdout |
 | `--pager` | | Pipe output through pager (`less`/`more`) |
