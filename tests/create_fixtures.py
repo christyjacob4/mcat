@@ -35,15 +35,9 @@ with open(os.path.join(FIXTURE_DIR, "sample.jsonl"), "w") as f:
         f.write(json.dumps(row) + "\n")
 
 # Parquet
-import pyarrow as pa
-import pyarrow.parquet as pq
-table = pa.table({
-    "name": [r["name"] for r in ROWS],
-    "age": [r["age"] for r in ROWS],
-    "city": [r["city"] for r in ROWS],
-    "score": [r["score"] for r in ROWS],
-})
-pq.write_table(table, os.path.join(FIXTURE_DIR, "sample.parquet"))
+import pandas as pd
+df = pd.DataFrame(ROWS)
+df.to_parquet(os.path.join(FIXTURE_DIR, "sample.parquet"), engine="fastparquet")
 
 # Avro
 import fastavro

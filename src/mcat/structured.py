@@ -1,4 +1,4 @@
-"""Structured format handlers: Parquet, ORC, Avro, JSONL, CSV/TSV."""
+"""Structured format handlers: Parquet, Avro, JSONL, CSV/TSV."""
 
 from __future__ import annotations
 
@@ -175,28 +175,33 @@ def _finalize_rows(rows: list[dict], opts: dict):
 # --- Parquet ---
 
 def _handle_parquet(path: str, opts: dict):
-    import pyarrow.parquet as pq
+    from fastparquet import ParquetFile
 
     if "://" in path:
         import fsspec
         so = _storage_options(path, opts.get("s3_endpoint"))
         fs, fpath = fsspec.core.url_to_fs(path, **so)
-        pf = pq.ParquetFile(fs.open(fpath, "rb"))
+        pf = ParquetFile(fpath, fs=fs)
     else:
-        pf = pq.ParquetFile(path)
+        pf = ParquetFile(path)
 
     if opts.get("schema"):
-        console.print(pf.schema_arrow)
+        dtypes = pf.dtypes
+        lines = [f"{col_name}: {dtype}" for col_name, dtype in dtypes.items()]
+        console.print("\n".join(lines))
         return
 
     # --count: use metadata for instant row count
     if opts.get("count"):
-        print(pf.metadata.num_rows)
+        print(pf.count())
         return
 
     col_filter = opts.get("columns")
+    all_columns = list(pf.columns)
+    if col_filter:
+        col_filter = [c for c in col_filter if c in all_columns]
 
-    num_row_groups = pf.metadata.num_row_groups
+    num_row_groups = len(pf.row_groups)
     show_progress = num_row_groups > 1 and _should_show_progress()
 
     # Smart --tail for Parquet: read only the last row group(s) needed
@@ -204,34 +209,25 @@ def _handle_parquet(path: str, opts: dict):
     if opts.get("tail") and not opts.get("head") and not opts.get("sort") and not opts.get("grep"):
         tail_n = opts["tail"]
         rows: list[dict] = []
-        # Read row groups from the end
         if show_progress:
             with _make_bar_progress() as progress:
                 task = progress.add_task("Reading...", total=num_row_groups)
-                for i in range(num_row_groups - 1, -1, -1):
-                    rg = pf.read_row_group(i, columns=col_filter)
-                    batch_rows = rg.to_pydict()
-                    if batch_rows:
-                        keys = list(batch_rows.keys())
-                        n = len(batch_rows[keys[0]])
-                        chunk = [{k: batch_rows[k][j] for k in keys} for j in range(n)]
-                        rows = chunk + rows
+                for rg in reversed(pf.row_groups):
+                    df_chunk = pf.read_row_group_file(rg, col_filter or pf.columns, pf.categories)
+                    chunk_rows = df_chunk.to_dict(orient="records")
+                    rows = chunk_rows + rows
                     progress.update(task, advance=1)
                     if len(rows) >= tail_n:
                         rows = rows[-tail_n:]
                         break
         else:
-            for i in range(num_row_groups - 1, -1, -1):
-                rg = pf.read_row_group(i, columns=col_filter)
-                batch_rows = rg.to_pydict()
-                if batch_rows:
-                    keys = list(batch_rows.keys())
-                    n = len(batch_rows[keys[0]])
-                    chunk = [{k: batch_rows[k][j] for k in keys} for j in range(n)]
-                    rows = chunk + rows
-                    if len(rows) >= tail_n:
-                        rows = rows[-tail_n:]
-                        break
+            for rg in reversed(pf.row_groups):
+                df_chunk = pf.read_row_group_file(rg, col_filter or pf.columns, pf.categories)
+                chunk_rows = df_chunk.to_dict(orient="records")
+                rows = chunk_rows + rows
+                if len(rows) >= tail_n:
+                    rows = rows[-tail_n:]
+                    break
         _finalize_rows(rows, opts)
         return
 
@@ -242,65 +238,20 @@ def _handle_parquet(path: str, opts: dict):
     if show_progress:
         with _make_bar_progress() as progress:
             task = progress.add_task("Reading...", total=num_row_groups)
-            for i in range(num_row_groups):
-                rg = pf.read_row_group(i, columns=col_filter)
-                batch_rows = rg.to_pydict()
-                if batch_rows:
-                    keys = list(batch_rows.keys())
-                    n = len(batch_rows[keys[0]])
-                    for j in range(n):
-                        rows.append({k: batch_rows[k][j] for k in keys})
-                        if limit and len(rows) >= limit:
-                            break
+            for rg in pf.row_groups:
+                df_chunk = pf.read_row_group_file(rg, col_filter or pf.columns, pf.categories)
+                chunk_rows = df_chunk.to_dict(orient="records")
+                rows.extend(chunk_rows)
                 progress.update(task, advance=1)
                 if limit and len(rows) >= limit:
+                    rows = rows[:limit]
                     break
     else:
-        for i in range(num_row_groups):
-            rg = pf.read_row_group(i, columns=col_filter)
-            batch_rows = rg.to_pydict()
-            if batch_rows:
-                keys = list(batch_rows.keys())
-                n = len(batch_rows[keys[0]])
-                for j in range(n):
-                    rows.append({k: batch_rows[k][j] for k in keys})
-                    if limit and len(rows) >= limit:
-                        break
-            if limit and len(rows) >= limit:
-                break
+        df = pf.to_pandas(columns=col_filter)
+        rows = df.to_dict(orient="records")
 
-    _finalize_rows(rows, opts)
-
-
-# --- ORC ---
-
-def _handle_orc(path: str, opts: dict):
-    import pyarrow.orc as orc
-
-    f = _open_file(path, s3_endpoint=opts.get("s3_endpoint"))
-    reader = orc.ORCFile(f)
-
-    if opts.get("schema"):
-        console.print(reader.schema)
-        f.close()
-        return
-
-    if opts.get("count"):
-        print(reader.nrows)
-        f.close()
-        return
-
-    col_filter = opts.get("columns")
-    table = reader.read(columns=col_filter)
-    rows_dict = table.to_pydict()
-    f.close()
-
-    if not rows_dict:
-        return
-
-    keys = list(rows_dict.keys())
-    n = len(rows_dict[keys[0]])
-    rows = [{k: rows_dict[k][i] for k in keys} for i in range(n)]
+    if limit and len(rows) > limit:
+        rows = rows[:limit]
 
     _finalize_rows(rows, opts)
 
@@ -515,42 +466,6 @@ def _handle_excel(path: str, opts: dict):
     _finalize_rows(rows, opts)
 
 
-# --- Feather / Arrow IPC ---
-
-def _handle_feather(path: str, opts: dict):
-    import pyarrow
-    import pyarrow.feather
-    import pyarrow.ipc
-
-    f = _open_file(path, "rb", s3_endpoint=opts.get("s3_endpoint"))
-    clean = path.split("?")[0].split("#")[0].lower()
-    if clean.endswith(".arrow"):
-        table = pyarrow.ipc.open_stream(f).read_all()
-    else:
-        table = pyarrow.feather.read_table(f)
-    f.close()
-
-    if opts.get("schema"):
-        console.print(table.schema)
-        return
-    if opts.get("count"):
-        print(table.num_rows)
-        return
-
-    col_filter = opts.get("columns")
-    if col_filter:
-        table = table.select([c for c in col_filter if c in table.column_names])
-
-    rows_dict = table.to_pydict()
-    if not rows_dict:
-        return
-    keys = list(rows_dict.keys())
-    n = len(rows_dict[keys[0]])
-    rows = [{k: rows_dict[k][i] for k in keys} for i in range(n)]
-
-    _finalize_rows(rows, opts)
-
-
 # --- JSON ---
 
 def _handle_json(path: str, opts: dict):
@@ -583,14 +498,11 @@ def _handle_json(path: str, opts: dict):
 
 _HANDLERS = {
     "parquet": _handle_parquet,
-    "orc": _handle_orc,
     "avro": _handle_avro,
     "jsonl": _handle_jsonl,
     "csv": lambda p, o: _handle_csv(p, o, ","),
     "tsv": lambda p, o: _handle_csv(p, o, "\t"),
     "excel": _handle_excel,
-    "feather": _handle_feather,
-    "arrow": _handle_feather,
     "json": _handle_json,
 }
 
@@ -729,25 +641,5 @@ def _handle_with_file_obj(path: str, fmt: str, opts: dict, file_obj):
                     break
         _finalize_rows(rows, opts)
 
-    elif fmt == "orc":
-        import pyarrow.orc as orc
-        reader = orc.ORCFile(file_obj)
-
-        if opts.get("schema"):
-            console.print(reader.schema)
-            return
-        if opts.get("count"):
-            print(reader.nrows)
-            return
-
-        col_filter = opts.get("columns")
-        table = reader.read(columns=col_filter)
-        rows_dict = table.to_pydict()
-        if not rows_dict:
-            return
-        keys = list(rows_dict.keys())
-        n = len(rows_dict[keys[0]])
-        rows = [{k: rows_dict[k][i] for k in keys} for i in range(n)]
-        _finalize_rows(rows, opts)
     else:
         raise ValueError(f"Unsupported format for file_obj streaming: {fmt}")

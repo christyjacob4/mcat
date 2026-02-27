@@ -10,7 +10,7 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 authors = [{ name = "Christy Jacob", email = "christyjacob4@users.noreply.github.com" }]
-keywords = ["cat", "parquet", "avro", "orc", "cli", "data"]
+keywords = ["cat", "parquet", "avro", "cli", "data"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
@@ -21,7 +21,8 @@ classifiers = [
 dependencies = [
     "typer>=0.9",
     "rich>=13",
-    "pyarrow>=14",
+    "fastparquet",
+    "pandas",
     "fsspec>=2023.1",
     "boto3",
     "s3fs",

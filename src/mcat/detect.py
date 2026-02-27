@@ -8,22 +8,18 @@ _EXT_MAP = {
     ".parquet": "parquet",
     ".pq": "parquet",
     ".avro": "avro",
-    ".orc": "orc",
     ".jsonl": "jsonl",
     ".ndjson": "jsonl",
     ".csv": "csv",
     ".tsv": "tsv",
     ".xlsx": "excel",
     ".xls": "excel",
-    ".feather": "feather",
-    ".arrow": "arrow",
     ".json": "json",
 }
 
 # Magic byte signatures for binary formats
 _MAGIC_BYTES = {
     b"PAR1": "parquet",
-    b"ORC": "orc",
     b"Obj\x01": "avro",
 }
 

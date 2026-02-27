@@ -51,7 +51,7 @@ def main(
     pager: bool = typer.Option(False, "--pager", help="Pipe output through pager (less/more)"),
     version: bool = typer.Option(False, "--version", "-V", help="Show version"),
 ) -> None:
-    """cat on steroids \u2014 read files with support for Parquet, Avro, ORC, CSV, JSONL, Excel, Feather, Arrow IPC, JSON, and remote sources."""
+    """cat on steroids -- read files with support for Parquet, Avro, CSV, JSONL, Excel, JSON, and remote sources."""
     if version:
         from mcat import __version__
         typer.echo(f"mcat {__version__}")
@@ -206,7 +206,7 @@ def main(
                 fmt = detect_format(f)
 
                 if comp and comp != "tar" and fmt and fmt != "text":
-                    # Compressed structured file \u2014 decompress and handle
+                    # Compressed structured file -- decompress and handle
                     try:
                         if query:
                             # --query on compressed file: decompress to temp, then query
@@ -216,9 +216,8 @@ def main(
                             raw_f = _open_file(f, "rb", s3_endpoint=s3_endpoint)
                             decompressed = decompress_open(raw_f, comp)
                             ext_map = {"parquet": ".parquet", "csv": ".csv", "tsv": ".tsv",
-                                       "jsonl": ".jsonl", "json": ".json", "orc": ".orc",
-                                       "avro": ".avro", "feather": ".feather", "arrow": ".arrow",
-                                       "excel": ".xlsx"}
+                                       "jsonl": ".jsonl", "json": ".json",
+                                       "avro": ".avro", "excel": ".xlsx"}
                             suffix = ext_map.get(fmt, "")
                             tmp = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
                             tmp.write(decompressed.read())
@@ -241,18 +240,20 @@ def main(
                             decompressed = decompress_open(raw_f, comp)
 
                             if fmt == "parquet":
-                                # Parquet needs random access \u2014 read fully into memory
+                                # Parquet needs random access -- read fully into memory
                                 import io
-                                import pyarrow.parquet as pq
+                                from fastparquet import ParquetFile
                                 data = decompressed.read()
                                 buf = io.BytesIO(data)
-                                pf = pq.ParquetFile(buf)
+                                pf = ParquetFile(buf)
 
                                 if struct_opts.get("schema"):
                                     from rich.console import Console
-                                    Console().print(pf.schema_arrow)
+                                    dtypes = pf.dtypes
+                                    lines = [f"{col_name}: {dtype}" for col_name, dtype in dtypes.items()]
+                                    Console().print("\n".join(lines))
                                 elif struct_opts.get("count"):
-                                    print(pf.metadata.num_rows)
+                                    print(pf.count())
                                 elif stats:
                                     from mcat.stats import handle_stats
                                     cols = columns.split(",") if columns else None
@@ -260,7 +261,6 @@ def main(
                                 else:
                                     # Use normal parquet handler on the buffer
                                     from mcat.structured import _handle_parquet
-                                    # Save and restore \u2014 hack: write to temp
                                     import tempfile, os
                                     tmp = tempfile.NamedTemporaryFile(suffix=".parquet", delete=False)
                                     tmp.write(data)
@@ -285,7 +285,7 @@ def main(
                         _print_error(f, exc)
                         exit_code = 1
                 elif comp and (not fmt or fmt == "text"):
-                    # Compressed text file \u2014 decompress and cat
+                    # Compressed text file -- decompress and cat
                     try:
                         from mcat.structured import _open_file
                         raw_f = _open_file(f, "rb", s3_endpoint=s3_endpoint)

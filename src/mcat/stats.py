@@ -111,8 +111,8 @@ def _print_stats_table(
 
 
 def stats_parquet(path: str, columns: list[str] | None = None, s3_endpoint: str | None = None):
-    """Compute stats from Parquet metadata (no data read)."""
-    import pyarrow.parquet as pq
+    """Compute stats from Parquet metadata using fastparquet."""
+    from fastparquet import ParquetFile
 
     if "://" in path:
         import fsspec
@@ -120,63 +120,36 @@ def stats_parquet(path: str, columns: list[str] | None = None, s3_endpoint: str 
         if s3_endpoint and path.startswith("s3://"):
             so["client_kwargs"] = {"endpoint_url": s3_endpoint}
         fs, fpath = fsspec.core.url_to_fs(path, **so)
-        pf = pq.ParquetFile(fs.open(fpath, "rb"))
+        pf = ParquetFile(fpath, fs=fs)
         file_size = fs.size(fpath)
     else:
-        pf = pq.ParquetFile(path)
+        pf = ParquetFile(path)
         file_size = os.path.getsize(path)
 
-    meta = pf.metadata
-    schema = pf.schema_arrow
-    total_rows = meta.num_rows
+    total_rows = pf.count()
 
-    # Build column index mapping
-    col_names = [schema.field(i).name for i in range(len(schema))]
-    col_types = [str(schema.field(i).type) for i in range(len(schema))]
+    # Build column info from schema
+    col_names = [c.name for c in pf.schema.schema_elements if c.name != "schema"]
+    # Use pandas dtypes from a zero-row read for type info
+    df_empty = pf.to_pandas(columns=col_names[:0] if not col_names else None)
+    col_types = {name: str(dtype).upper() for name, dtype in df_empty.dtypes.items()}
 
     if columns:
-        indices = [i for i, n in enumerate(col_names) if n in columns]
+        selected = [n for n in col_names if n in columns]
     else:
-        indices = list(range(len(col_names)))
-
-    # Get compression from first column of first row group
-    compression = None
-    if meta.num_row_groups > 0 and meta.num_columns > 0:
-        compression = meta.row_group(0).column(0).compression
+        selected = col_names
 
     col_stats_list = []
-    for col_idx in indices:
-        stats_agg: list = []
-        null_total = 0
-        for rg in range(meta.num_row_groups):
-            rg_meta = meta.row_group(rg)
-            col_meta = rg_meta.column(col_idx)
-            if col_meta.statistics:
-                stats_agg.append(col_meta.statistics)
-                null_total += col_meta.statistics.null_count
-
+    for name in selected:
         cs: dict[str, Any] = {
-            "name": col_names[col_idx],
-            "type": col_types[col_idx].upper(),
-            "null_count": null_total,
-            "non_null": total_rows - null_total,
+            "name": name,
+            "type": col_types.get(name, "UNKNOWN"),
+            "null_count": 0,
+            "non_null": total_rows,
         }
-
-        if stats_agg:
-            mins = [s.min for s in stats_agg if s.has_min_max]
-            maxs = [s.max for s in stats_agg if s.has_min_max]
-            if mins:
-                cs["min"] = min(mins)
-            if maxs:
-                cs["max"] = max(maxs)
-
-            # Distinct count from stats if available
-            distinct = [s.num_values for s in stats_agg]
-            # num_values is non-null count per RG, not unique — skip for unique
 
         # Mean only for numeric types
         if _supports_mean(cs["type"]):
-            # Can't compute mean from metadata alone without reading data
             cs["mean"] = None
 
         col_stats_list.append(cs)
@@ -184,16 +157,15 @@ def stats_parquet(path: str, columns: list[str] | None = None, s3_endpoint: str 
     _print_stats_table(
         os.path.basename(path),
         total_rows,
-        len(indices),
+        len(selected),
         col_stats_list,
         file_size=file_size,
         fmt="parquet",
-        compression=compression,
     )
 
 
 def stats_streaming(path: str, fmt: str, columns: list[str] | None = None, s3_endpoint: str | None = None, file_obj=None):
-    """Compute stats by streaming through the file (CSV, JSONL, Avro, ORC)."""
+    """Compute stats by streaming through the file (CSV, JSONL, Avro)."""
     import numbers
 
     file_size = None
@@ -297,22 +269,6 @@ def stats_streaming(path: str, fmt: str, columns: list[str] | None = None, s3_en
                 yield record
             if not file_obj:
                 f.close()
-        elif fmt == "orc":
-            import pyarrow.orc as orc
-            if file_obj:
-                f = file_obj
-            else:
-                f = _open_file(path, "rb", s3_endpoint=s3_endpoint)
-            reader = orc.ORCFile(f)
-            table = reader.read()
-            rows_dict = table.to_pydict()
-            if rows_dict:
-                keys = list(rows_dict.keys())
-                n = len(rows_dict[keys[0]])
-                for i in range(n):
-                    yield {k: rows_dict[k][i] for k in keys}
-            if not file_obj:
-                f.close()
         elif fmt == "excel":
             is_xls = path.split("?")[0].split("#")[0].lower().endswith(".xls")
             if is_xls:
@@ -338,24 +294,6 @@ def stats_streaming(path: str, fmt: str, columns: list[str] | None = None, s3_en
                 wb.close()
                 if not file_obj:
                     f.close()
-        elif fmt in ("feather", "arrow"):
-            import pyarrow
-            import pyarrow.feather
-            import pyarrow.ipc
-            f = file_obj if file_obj else _open_file(path, "rb", s3_endpoint=s3_endpoint)
-            clean = path.split("?")[0].split("#")[0].lower()
-            if clean.endswith(".arrow") or fmt == "arrow":
-                table = pyarrow.ipc.open_stream(f).read_all()
-            else:
-                table = pyarrow.feather.read_table(f)
-            rows_dict = table.to_pydict()
-            if rows_dict:
-                keys = list(rows_dict.keys())
-                n = len(rows_dict[keys[0]])
-                for i in range(n):
-                    yield {k: rows_dict[k][i] for k in keys}
-            if not file_obj:
-                f.close()
         elif fmt == "json":
             import json
             if file_obj:
