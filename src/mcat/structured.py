@@ -13,18 +13,6 @@ console = Console()
 err_console = Console(stderr=True)
 
 
-def _check_extra(protocol: str, package: str, extra: str) -> None:
-    """Check if a required extra is installed, raise helpful error if not."""
-    try:
-        __import__(package)
-    except ImportError:
-        err_console.print(
-            f"[bold red]Error:[/bold red] {protocol} support requires mcat[{extra}]. "
-            f"Install with: [bold]uv tool install \"mcat[{extra}]\"[/bold]"
-        )
-        raise SystemExit(1)
-
-
 def _storage_options(path: str, s3_endpoint: str | None = None) -> dict:
     """Build fsspec storage_options for the given path."""
     opts: dict = {}
@@ -36,13 +24,6 @@ def _storage_options(path: str, s3_endpoint: str | None = None) -> dict:
 def _open_file(path: str, mode: str = "rb", s3_endpoint: str | None = None):
     """Open local or remote file via fsspec."""
     if "://" in path:
-        if path.startswith("s3://"):
-            _check_extra("S3", "s3fs", "s3")
-        elif path.startswith(("gs://", "gcs://")):
-            _check_extra("GCS", "gcsfs", "gcs")
-        elif path.startswith(("az://", "abfs://")):
-            _check_extra("Azure", "adlfs", "azure")
-        # https:// falls through — fsspec has a built-in HTTP filesystem
         import fsspec
         return fsspec.open(path, mode, **_storage_options(path, s3_endpoint)).open()
     return open(path, mode)
@@ -120,12 +101,6 @@ def _handle_parquet(path: str, opts: dict):
     import pyarrow.parquet as pq
 
     if "://" in path:
-        if path.startswith("s3://"):
-            _check_extra("S3", "s3fs", "s3")
-        elif path.startswith(("gs://", "gcs://")):
-            _check_extra("GCS", "gcsfs", "gcs")
-        elif path.startswith(("az://", "abfs://")):
-            _check_extra("Azure", "adlfs", "azure")
         import fsspec
         so = _storage_options(path, opts.get("s3_endpoint"))
         fs, fpath = fsspec.core.url_to_fs(path, **so)
@@ -221,7 +196,6 @@ def _handle_orc(path: str, opts: dict):
 # --- Avro ---
 
 def _handle_avro(path: str, opts: dict):
-    _check_extra("Avro", "fastavro", "avro")
     import fastavro
 
     f = _open_file(path, s3_endpoint=opts.get("s3_endpoint"))
@@ -331,7 +305,6 @@ def _handle_excel(path: str, opts: dict):
     is_xls = path.split("?")[0].split("#")[0].lower().endswith(".xls")
 
     if is_xls:
-        _check_extra("Excel (.xls)", "xlrd", "excel")
         import xlrd
         f = _open_file(path, "rb", s3_endpoint=opts.get("s3_endpoint"))
         data = f.read()
@@ -356,7 +329,6 @@ def _handle_excel(path: str, opts: dict):
                 row = {k: v for k, v in row.items() if k in cols}
             rows.append(row)
     else:
-        _check_extra("Excel (.xlsx)", "openpyxl", "excel")
         import openpyxl
         f = _open_file(path, "rb", s3_endpoint=opts.get("s3_endpoint"))
         wb = openpyxl.load_workbook(f, read_only=True, data_only=True)
@@ -544,7 +516,6 @@ def _handle_with_file_obj(path: str, fmt: str, opts: dict, file_obj):
         _output_rows(rows, opts)
 
     elif fmt == "avro":
-        _check_extra("Avro", "fastavro", "avro")
         import fastavro
         reader = fastavro.reader(file_obj)
 

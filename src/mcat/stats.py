@@ -253,7 +253,7 @@ def stats_streaming(path: str, fmt: str, columns: list[str] | None = None, s3_en
 
     def _iter_rows():
         nonlocal file_obj
-        from mcat.structured import _open_file, _check_extra
+        from mcat.structured import _open_file
 
         if fmt == "csv" or fmt == "tsv":
             import csv as csv_mod
@@ -285,7 +285,6 @@ def stats_streaming(path: str, fmt: str, columns: list[str] | None = None, s3_en
             if not file_obj:
                 f.close()
         elif fmt == "avro":
-            _check_extra("Avro", "fastavro", "avro")
             import fastavro
             if file_obj:
                 f = file_obj
@@ -315,7 +314,6 @@ def stats_streaming(path: str, fmt: str, columns: list[str] | None = None, s3_en
         elif fmt == "excel":
             is_xls = path.split("?")[0].split("#")[0].lower().endswith(".xls")
             if is_xls:
-                _check_extra("Excel (.xls)", "xlrd", "excel")
                 import xlrd
                 f = file_obj if file_obj else _open_file(path, "rb", s3_endpoint=s3_endpoint)
                 data = f.read()
@@ -327,7 +325,6 @@ def stats_streaming(path: str, fmt: str, columns: list[str] | None = None, s3_en
                 for r in range(1, sheet.nrows):
                     yield {headers[c]: sheet.cell_value(r, c) for c in range(sheet.ncols)}
             else:
-                _check_extra("Excel (.xlsx)", "openpyxl", "excel")
                 import openpyxl
                 f = file_obj if file_obj else _open_file(path, "rb", s3_endpoint=s3_endpoint)
                 wb = openpyxl.load_workbook(f, read_only=True, data_only=True)
