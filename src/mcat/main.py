@@ -39,6 +39,7 @@ def main(
     schema: bool = typer.Option(False, "--schema", help="Print schema only"),
     columns: Optional[str] = typer.Option(None, "--columns", help="Comma-separated column names"),
     sample: Optional[int] = typer.Option(None, "--sample", help="Random sample of N rows"),
+    query: Optional[str] = typer.Option(None, "--query", help="SQL WHERE clause to filter rows (e.g., 'age > 30')"),
     count: bool = typer.Option(False, "-c", "--count", help="Print row count only"),
     stats: bool = typer.Option(False, "--stats", help="Print column statistics summary"),
     diff: bool = typer.Option(False, "--diff", help="Compare two structured files side by side"),
@@ -48,7 +49,7 @@ def main(
     pager: bool = typer.Option(False, "--pager", help="Pipe output through pager (less/more)"),
     version: bool = typer.Option(False, "--version", "-V", help="Show version"),
 ) -> None:
-    """cat on steroids — read files with support for Parquet, Avro, ORC, CSV, JSONL, Excel, Feather, Arrow IPC, JSON, and remote sources."""
+    """cat on steroids \u2014 read files with support for Parquet, Avro, ORC, CSV, JSONL, Excel, Feather, Arrow IPC, JSON, and remote sources."""
     if version:
         from mcat import __version__
         typer.echo(f"mcat {__version__}")
@@ -160,6 +161,7 @@ def main(
         "s3_endpoint": s3_endpoint,
         "count": count,
         "output": output,
+        "query": query,
     }
 
     # Handle --output: redirect stdout to file
@@ -200,58 +202,86 @@ def main(
                 fmt = detect_format(f)
 
                 if comp and comp != "tar" and fmt and fmt != "text":
-                    # Compressed structured file — decompress and handle
+                    # Compressed structured file \u2014 decompress and handle
                     try:
-                        from mcat.structured import _open_file
-                        raw_f = _open_file(f, "rb", s3_endpoint=s3_endpoint)
-                        decompressed = decompress_open(raw_f, comp)
-
-                        if fmt == "parquet":
-                            # Parquet needs random access — read fully into memory
-                            import io
-                            import pyarrow.parquet as pq
-                            data = decompressed.read()
-                            buf = io.BytesIO(data)
-                            pf = pq.ParquetFile(buf)
-
-                            if struct_opts.get("schema"):
-                                from rich.console import Console
-                                Console().print(pf.schema_arrow)
-                            elif struct_opts.get("count"):
-                                print(pf.metadata.num_rows)
-                            elif stats:
-                                from mcat.stats import handle_stats
-                                cols = columns.split(",") if columns else None
-                                handle_stats(f, fmt, columns=cols, s3_endpoint=s3_endpoint)
-                            else:
-                                # Use normal parquet handler on the buffer
-                                from mcat.structured import _handle_parquet
-                                # Save and restore — hack: write to temp
-                                import tempfile, os
-                                tmp = tempfile.NamedTemporaryFile(suffix=".parquet", delete=False)
-                                tmp.write(data)
-                                tmp.close()
-                                try:
-                                    _handle_parquet(tmp.name, struct_opts)
-                                finally:
-                                    os.unlink(tmp.name)
+                        if query:
+                            # --query on compressed file: decompress to temp, then query
+                            from mcat.structured import _open_file
+                            from mcat.query import handle_query
+                            import tempfile, os
+                            raw_f = _open_file(f, "rb", s3_endpoint=s3_endpoint)
+                            decompressed = decompress_open(raw_f, comp)
+                            ext_map = {"parquet": ".parquet", "csv": ".csv", "tsv": ".tsv",
+                                       "jsonl": ".jsonl", "json": ".json", "orc": ".orc",
+                                       "avro": ".avro", "feather": ".feather", "arrow": ".arrow",
+                                       "excel": ".xlsx"}
+                            suffix = ext_map.get(fmt, "")
+                            tmp = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
+                            tmp.write(decompressed.read())
+                            tmp.close()
+                            try:
+                                handle_query(tmp.name, fmt, query, struct_opts)
+                            finally:
+                                os.unlink(tmp.name)
+                            try:
+                                decompressed.close()
+                            except Exception:
+                                pass
+                            try:
+                                raw_f.close()
+                            except Exception:
+                                pass
                         else:
-                            # For streaming formats, pass decompressed file object
-                            handle_structured(f, fmt, struct_opts, file_obj=decompressed)
+                            from mcat.structured import _open_file
+                            raw_f = _open_file(f, "rb", s3_endpoint=s3_endpoint)
+                            decompressed = decompress_open(raw_f, comp)
 
-                        try:
-                            decompressed.close()
-                        except Exception:
-                            pass
-                        try:
-                            raw_f.close()
-                        except Exception:
-                            pass
+                            if fmt == "parquet":
+                                # Parquet needs random access \u2014 read fully into memory
+                                import io
+                                import pyarrow.parquet as pq
+                                data = decompressed.read()
+                                buf = io.BytesIO(data)
+                                pf = pq.ParquetFile(buf)
+
+                                if struct_opts.get("schema"):
+                                    from rich.console import Console
+                                    Console().print(pf.schema_arrow)
+                                elif struct_opts.get("count"):
+                                    print(pf.metadata.num_rows)
+                                elif stats:
+                                    from mcat.stats import handle_stats
+                                    cols = columns.split(",") if columns else None
+                                    handle_stats(f, fmt, columns=cols, s3_endpoint=s3_endpoint)
+                                else:
+                                    # Use normal parquet handler on the buffer
+                                    from mcat.structured import _handle_parquet
+                                    # Save and restore \u2014 hack: write to temp
+                                    import tempfile, os
+                                    tmp = tempfile.NamedTemporaryFile(suffix=".parquet", delete=False)
+                                    tmp.write(data)
+                                    tmp.close()
+                                    try:
+                                        _handle_parquet(tmp.name, struct_opts)
+                                    finally:
+                                        os.unlink(tmp.name)
+                            else:
+                                # For streaming formats, pass decompressed file object
+                                handle_structured(f, fmt, struct_opts, file_obj=decompressed)
+
+                            try:
+                                decompressed.close()
+                            except Exception:
+                                pass
+                            try:
+                                raw_f.close()
+                            except Exception:
+                                pass
                     except Exception as exc:
                         _print_error(f, exc)
                         exit_code = 1
                 elif comp and (not fmt or fmt == "text"):
-                    # Compressed text file — decompress and cat
+                    # Compressed text file \u2014 decompress and cat
                     try:
                         from mcat.structured import _open_file
                         raw_f = _open_file(f, "rb", s3_endpoint=s3_endpoint)
@@ -277,7 +307,11 @@ def main(
                         exit_code = 1
                 elif fmt and (fmt != "text"):
                     try:
-                        handle_structured(f, fmt, struct_opts)
+                        if query:
+                            from mcat.query import handle_query
+                            handle_query(f, fmt, query, struct_opts)
+                        else:
+                            handle_structured(f, fmt, struct_opts)
                     except Exception as exc:
                         _print_error(f, exc)
                         exit_code = 1
