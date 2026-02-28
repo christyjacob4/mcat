@@ -102,6 +102,14 @@ mcat data.parquet --format jsonl --output data.jsonl
 mcat data.csv --format jsonl --output data.jsonl
 ```
 
+Pager support for large output (respects `$PAGER`, defaults to `less -R`):
+
+```bash
+mcat large_data.parquet --pager          # view in pager
+mcat data.csv --pager                     # page through CSV table
+PAGER="more" mcat data.parquet --pager   # use 'more' instead of 'less'
+```
+
 ## Flag Reference
 
 | Flag | Short | Description |
@@ -124,6 +132,7 @@ mcat data.csv --format jsonl --output data.jsonl
 | `--stats` | | Print column statistics summary |
 | `--detect` | | Print detected format and exit |
 | `--output` | `-o` | Write output to file instead of stdout |
+| `--pager` | | Pipe output through pager (`less`/`more`) |
 | `--s3-endpoint` | | Custom S3 endpoint URL (MinIO, R2, B2, Spaces) |
 | `--version` | `-V` | Show version |
 
