@@ -3,21 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>mcat — cat on steroids</title>
+  <title>mcat &mdash; cat on steroids</title>
+  <meta name="description" content="A drop-in cat replacement that understands Parquet, CSV, JSONL, Avro, Excel, and remote sources. SQL queries, sorting, grep, diff, and more.">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- Sticky Navbar -->
   <nav class="navbar">
     <div class="nav-inner">
-      <a href="#" class="nav-logo">🐱 mcat</a>
+      <a href="#" class="nav-logo">mcat</a>
       <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#demos">Demos</a>
         <a href="#install">Install</a>
-        <a href="#usage">Usage</a>
         <a href="#formats">Formats</a>
         <a href="#auth">Auth</a>
-        <a href="https://github.com/christyjacob4/mcat" target="_blank">GitHub ↗</a>
+        <a href="https://github.com/christyjacob4/mcat" target="_blank">GitHub &nearr;</a>
       </div>
     </div>
   </nav>
@@ -26,158 +27,69 @@
 
     <!-- Hero -->
     <div class="hero">
-      <h1>🐱 <span>mcat</span></h1>
-      <p class="tagline">cat on steroids — Parquet, Avro, CSV, JSONL, and remote sources</p>
+      <h1><span class="gradient">mcat</span></h1>
+      <p class="tagline">cat on steroids &mdash; Parquet, CSV, JSONL, Avro, Excel, SQL queries, and remote sources</p>
       <div class="badges">
         <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License">
         <img src="https://img.shields.io/badge/python-3.10+-green.svg" alt="Python 3.10+">
         <img src="https://img.shields.io/github/stars/christyjacob4/mcat?style=flat" alt="GitHub Stars">
         <img src="https://img.shields.io/pypi/v/mcat?style=flat" alt="PyPI Version">
       </div>
-      <div class="install-cmd" onclick="navigator.clipboard.writeText('uv tool install mcat')">uv tool install mcat</div>
+      <div class="install-cmd" onclick="navigator.clipboard.writeText('pip install mcat')">pip install mcat</div>
     </div>
 
-    <!-- Feature Pills -->
-    <div class="feature-pills">
-      <div class="pill">
-        <div class="pill-icon">🚀</div>
-        <div class="pill-title">Drop-in cat</div>
-        <div class="pill-desc">Works exactly like cat, every flag supported</div>
-      </div>
-      <div class="pill">
-        <div class="pill-icon">📦</div>
-        <div class="pill-title">5 formats</div>
-        <div class="pill-desc">Parquet · Avro · CSV · JSONL · JSON auto-detected</div>
-      </div>
-      <div class="pill">
-        <div class="pill-icon">📊</div>
-        <div class="pill-title">Instant stats</div>
-        <div class="pill-desc">Column profiling from Parquet metadata — zero I/O</div>
-      </div>
-      <div class="pill">
-        <div class="pill-icon">🗜️</div>
-        <div class="pill-title">Transparent compression</div>
-        <div class="pill-desc">gz · zstd · bz2 · lz4 · xz — auto-detected</div>
-      </div>
-      <div class="pill">
-        <div class="pill-icon">☁️</div>
-        <div class="pill-title">Any cloud</div>
-        <div class="pill-desc">S3 · GCS · MinIO · R2 · HTTP · More</div>
-      </div>
-    </div>
-
-    <!-- See it in action -->
-    <section>
-      <h2>See it in action</h2>
-      <div class="terminal-demos">
-
-        <div class="terminal-window">
-          <div class="terminal-header">
-            <span class="dot red"></span>
-            <span class="dot yellow"></span>
-            <span class="dot green"></span>
-            <span class="terminal-title">mcat — parquet</span>
-          </div>
-          <div class="terminal-body">
-<pre><span class="t-prompt">$</span> <span class="t-cmd typing-cmd">mcat sales_data.parquet</span>
-<span class="typing-output"><span class="t-border">┌─────────────┬──────────┬────────┬───────────┐</span>
-<span class="t-border">│</span> <span class="t-header">name</span>        <span class="t-border">│</span> <span class="t-header">region</span>   <span class="t-border">│</span> <span class="t-header">sales</span>  <span class="t-border">│</span> <span class="t-header">quarter</span>   <span class="t-border">│</span>
-<span class="t-border">├─────────────┼──────────┼────────┼───────────┤</span>
-<span class="t-border">│</span> Alice Chen  <span class="t-border">│</span> APAC     <span class="t-border">│</span> <span class="t-num">94,230</span> <span class="t-border">│</span> Q1 2024   <span class="t-border">│</span>
-<span class="t-border">│</span> Bob Müller  <span class="t-border">│</span> EMEA     <span class="t-border">│</span> <span class="t-num">71,450</span> <span class="t-border">│</span> Q1 2024   <span class="t-border">│</span>
-<span class="t-border">│</span> Carol Smith <span class="t-border">│</span> Americas <span class="t-border">│</span> <span class="t-num">88,920</span> <span class="t-border">│</span> Q1 2024   <span class="t-border">│</span>
-<span class="t-border">│</span> David Park  <span class="t-border">│</span> APAC     <span class="t-border">│</span> <span class="t-num">102,100</span><span class="t-border">│</span> Q2 2024   <span class="t-border">│</span>
-<span class="t-border">│</span> Eve Santos  <span class="t-border">│</span> Americas <span class="t-border">│</span> <span class="t-num">67,800</span> <span class="t-border">│</span> Q2 2024   <span class="t-border">│</span>
-<span class="t-border">└─────────────┴──────────┴────────┴───────────┘</span>
-<span class="t-meta">5 rows · 4 columns · parquet</span></span></pre>
-          </div>
+    <!-- Features -->
+    <section id="features" class="fade-up">
+      <h2>Why mcat<span class="dim">?</span></h2>
+      <div class="features">
+        <div class="feature">
+          <div class="feature-icon">&gt;_</div>
+          <h3>Drop-in cat</h3>
+          <p>Every GNU cat flag works. -n, -b, -s, -A, -v &mdash; all of them. If you know cat, you know mcat.</p>
         </div>
-
-        <div class="terminal-window">
-          <div class="terminal-header">
-            <span class="dot red"></span>
-            <span class="dot yellow"></span>
-            <span class="dot green"></span>
-            <span class="terminal-title">mcat — schema</span>
-          </div>
-          <div class="terminal-body">
-<pre><span class="t-prompt">$</span> <span class="t-cmd">mcat --schema warehouse.parquet</span>
-<span class="t-header">Schema</span>  warehouse.parquet
- <span class="t-key">name</span>       <span class="t-type">STRING</span>
- <span class="t-key">region</span>     <span class="t-type">STRING</span>
- <span class="t-key">sales</span>      <span class="t-type">INT64</span>
- <span class="t-key">quarter</span>    <span class="t-type">STRING</span>
- <span class="t-key">timestamp</span>  <span class="t-type">TIMESTAMP[us]</span></pre>
-          </div>
+        <div class="feature">
+          <div class="feature-icon">{ }</div>
+          <h3>7+ formats</h3>
+          <p>Parquet, CSV, TSV, JSONL, JSON, Avro, Excel &mdash; auto-detected by extension or magic bytes.</p>
         </div>
-
-        <div class="terminal-window">
-          <div class="terminal-header">
-            <span class="dot red"></span>
-            <span class="dot yellow"></span>
-            <span class="dot green"></span>
-            <span class="terminal-title">mcat — S3 + JSONL</span>
-          </div>
-          <div class="terminal-body">
-<pre><span class="t-prompt">$</span> <span class="t-cmd">mcat s3://prod-logs/2024/app.jsonl --head 3</span>
-{<span class="t-key">"ts"</span>: <span class="t-str">"2024-01-15T08:23:11Z"</span>, <span class="t-key">"level"</span>: <span class="t-str">"INFO"</span>,  <span class="t-key">"msg"</span>: <span class="t-str">"Server started"</span>, <span class="t-key">"port"</span>: <span class="t-num">8080</span>}
-{<span class="t-key">"ts"</span>: <span class="t-str">"2024-01-15T08:23:12Z"</span>, <span class="t-key">"level"</span>: <span class="t-str">"INFO"</span>,  <span class="t-key">"msg"</span>: <span class="t-str">"Connected to DB"</span>, <span class="t-key">"host"</span>: <span class="t-str">"pg-1"</span>}
-{<span class="t-key">"ts"</span>: <span class="t-str">"2024-01-15T08:23:45Z"</span>, <span class="t-key">"level"</span>: <span class="t-str">"WARN"</span>,  <span class="t-key">"msg"</span>: <span class="t-str">"High memory usage"</span>, <span class="t-key">"pct"</span>: <span class="t-num">87.3</span>}</pre>
-          </div>
+        <div class="feature">
+          <div class="feature-icon">Q</div>
+          <h3>SQL queries</h3>
+          <p>Filter with --query using SQL WHERE clauses. Powered by DuckDB with predicate pushdown on Parquet.</p>
         </div>
-
-        <div class="terminal-window">
-          <div class="terminal-header">
-            <span class="dot red"></span>
-            <span class="dot yellow"></span>
-            <span class="dot green"></span>
-            <span class="terminal-title">mcat — stats</span>
-          </div>
-          <div class="terminal-body">
-<pre><span class="t-prompt">$</span> <span class="t-cmd">mcat --stats sales_data.parquet</span>
-<span class="t-header">Stats</span>  sales_data.parquet  (<span class="t-num">1,234,567</span> rows · 8 columns)
-
- <span class="t-header">Column</span>        <span class="t-header">Type</span>        <span class="t-header">Non-Null</span>    <span class="t-header">Null</span>   <span class="t-header">Min</span>           <span class="t-header">Max</span>           <span class="t-header">Mean</span>          <span class="t-header">Unique</span>
- <span class="t-border">──────────────────────────────────────────────────────────────────────────────────────────────</span>
- name          <span class="t-type">STRING</span>      <span class="t-num">1,234,567</span>      0   Aaron         Zoe           —             <span class="t-num">89,432</span>
- age           <span class="t-type">INT64</span>       <span class="t-num">1,230,000</span>  <span class="t-num">4,567</span>   18            94            <span class="t-num">36.4</span>          —
- salary        <span class="t-type">FLOAT64</span>     <span class="t-num">1,200,000</span> <span class="t-num">34,567</span>   <span class="t-num">22,000.00</span>     <span class="t-num">450,000.00</span>    <span class="t-num">87,432.10</span>     —
- region        <span class="t-type">STRING</span>      <span class="t-num">1,234,567</span>      0   APAC          EMEA          —             <span class="t-num">4</span>
- created_at    <span class="t-type">TIMESTAMP</span>   <span class="t-num">1,234,567</span>      0   2020-01-01    2024-12-31    —             —
- is_active     <span class="t-type">BOOL</span>        <span class="t-num">1,234,567</span>      0   False         True          —             <span class="t-num">2</span>
-<span class="t-meta">4.2 MB · parquet · compression: SNAPPY</span></pre>
-          </div>
+        <div class="feature">
+          <div class="feature-icon">#</div>
+          <h3>Instant stats</h3>
+          <p>Column profiling from Parquet metadata &mdash; min, max, nulls, uniques with zero full-file I/O.</p>
         </div>
-
+        <div class="feature">
+          <div class="feature-icon">S3</div>
+          <h3>Cloud native</h3>
+          <p>Stream from S3, GCS, Azure, HTTP, MinIO, R2. Zero-config auth &mdash; uses your existing credentials.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">gz</div>
+          <h3>Compression</h3>
+          <p>Transparent decompression for gzip, zstd, bz2, lz4, xz. Works on local and remote files.</p>
+        </div>
       </div>
     </section>
 
     <!-- Install -->
-    <section id="install">
+    <section id="install" class="fade-up">
       <h2>Install</h2>
       <div class="tabs">
-        <button class="tab-btn active" data-tab="macos">macOS</button>
-        <button class="tab-btn" data-tab="linux">Linux</button>
-        <button class="tab-btn" data-tab="windows">Windows</button>
+        <button class="tab-btn active" data-tab="pip">pip</button>
+        <button class="tab-btn" data-tab="uv">uv</button>
         <button class="tab-btn" data-tab="brew">Homebrew</button>
+        <button class="tab-btn" data-tab="apt">apt</button>
       </div>
-      <div class="tab-content active" id="tab-macos">
-        <pre><code><span class="comment"># Install uv</span>
+      <div class="tab-content active" id="tab-pip">
+        <pre><code><span class="cmd">pip install</span> mcat</code></pre>
+      </div>
+      <div class="tab-content" id="tab-uv">
+        <pre><code><span class="comment"># Install uv first (if you don't have it)</span>
 <span class="cmd">curl</span> -LsSf https://astral.sh/uv/install.sh | sh
-
-<span class="comment"># Install mcat</span>
-<span class="cmd">uv tool install</span> mcat</code></pre>
-      </div>
-      <div class="tab-content" id="tab-linux">
-        <pre><code><span class="comment"># Install uv</span>
-<span class="cmd">curl</span> -LsSf https://astral.sh/uv/install.sh | sh
-
-<span class="comment"># Install mcat</span>
-<span class="cmd">uv tool install</span> mcat</code></pre>
-      </div>
-      <div class="tab-content" id="tab-windows">
-        <pre><code><span class="comment"># Install uv (PowerShell)</span>
-<span class="cmd">powershell</span> -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 
 <span class="comment"># Install mcat</span>
 <span class="cmd">uv tool install</span> mcat</code></pre>
@@ -186,14 +98,113 @@
         <pre><code><span class="cmd">brew tap</span> christyjacob4/tap
 <span class="cmd">brew install</span> mcat</code></pre>
       </div>
+      <div class="tab-content" id="tab-apt">
+        <pre><code><span class="comment"># Add the PPA</span>
+<span class="cmd">sudo add-apt-repository</span> ppa:christyjacob4/mcat
+<span class="cmd">sudo apt update</span>
+
+<span class="comment"># Install mcat</span>
+<span class="cmd">sudo apt install</span> mcat</code></pre>
+      </div>
+    </section>
+
+    <!-- Terminal demos -->
+    <section id="demos" class="fade-up">
+      <h2>See it in action</h2>
+      <div class="terminal-demos">
+
+        <div class="terminal-window">
+          <div class="terminal-header">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+            <span class="terminal-title">parquet table</span>
+          </div>
+          <div class="terminal-body">
+<pre><span class="t-prompt">$</span> <span class="t-cmd typing-cmd">mcat sales_data.parquet</span>
+<span class="typing-output"><span class="t-border">┌─────────────┬──────────┬─────────┬───────────┐</span>
+<span class="t-border">│</span> <span class="t-header">name</span>        <span class="t-border">│</span> <span class="t-header">region</span>   <span class="t-border">│</span> <span class="t-header">sales</span>   <span class="t-border">│</span> <span class="t-header">quarter</span>   <span class="t-border">│</span>
+<span class="t-border">├─────────────┼──────────┼─────────┼───────────┤</span>
+<span class="t-border">│</span> Alice Chen  <span class="t-border">│</span> APAC     <span class="t-border">│</span> <span class="t-num">94,230</span>  <span class="t-border">│</span> Q1 2024   <span class="t-border">│</span>
+<span class="t-border">│</span> Bob Muller  <span class="t-border">│</span> EMEA     <span class="t-border">│</span> <span class="t-num">71,450</span>  <span class="t-border">│</span> Q1 2024   <span class="t-border">│</span>
+<span class="t-border">│</span> Carol Smith <span class="t-border">│</span> Americas <span class="t-border">│</span> <span class="t-num">88,920</span>  <span class="t-border">│</span> Q1 2024   <span class="t-border">│</span>
+<span class="t-border">│</span> David Park  <span class="t-border">│</span> APAC     <span class="t-border">│</span> <span class="t-num">102,100</span> <span class="t-border">│</span> Q2 2024   <span class="t-border">│</span>
+<span class="t-border">│</span> Eve Santos  <span class="t-border">│</span> Americas <span class="t-border">│</span> <span class="t-num">67,800</span>  <span class="t-border">│</span> Q2 2024   <span class="t-border">│</span>
+<span class="t-border">└─────────────┴──────────┴─────────┴───────────┘</span>
+<span class="t-meta">5 rows &middot; 4 columns &middot; parquet</span></span></pre>
+          </div>
+        </div>
+
+        <div class="terminal-window">
+          <div class="terminal-header">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+            <span class="terminal-title">--query &mdash; SQL filtering</span>
+          </div>
+          <div class="terminal-body">
+<pre><span class="t-prompt">$</span> <span class="t-cmd">mcat sales.parquet <span class="t-flag">--query</span> <span class="t-str">"sales > 80000 AND region = 'APAC'"</span></span>
+<span class="t-border">┌─────────────┬──────────┬─────────┬───────────┐</span>
+<span class="t-border">│</span> <span class="t-header">name</span>        <span class="t-border">│</span> <span class="t-header">region</span>   <span class="t-border">│</span> <span class="t-header">sales</span>   <span class="t-border">│</span> <span class="t-header">quarter</span>   <span class="t-border">│</span>
+<span class="t-border">├─────────────┼──────────┼─────────┼───────────┤</span>
+<span class="t-border">│</span> Alice Chen  <span class="t-border">│</span> APAC     <span class="t-border">│</span> <span class="t-num">94,230</span>  <span class="t-border">│</span> Q1 2024   <span class="t-border">│</span>
+<span class="t-border">│</span> David Park  <span class="t-border">│</span> APAC     <span class="t-border">│</span> <span class="t-num">102,100</span> <span class="t-border">│</span> Q2 2024   <span class="t-border">│</span>
+<span class="t-border">└─────────────┴──────────┴─────────┴───────────┘</span>
+<span class="t-meta">2 rows &middot; 4 columns &middot; parquet</span></pre>
+          </div>
+        </div>
+
+        <div class="terminal-window">
+          <div class="terminal-header">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+            <span class="terminal-title">--diff &mdash; file comparison</span>
+          </div>
+          <div class="terminal-body">
+<pre><span class="t-prompt">$</span> <span class="t-cmd">mcat <span class="t-flag">--diff</span> q1_sales.csv q2_sales.csv</span>
+<span class="t-border">┌─────┬────────┬─────────────┬─────────────────────────┐</span>
+<span class="t-border">│</span> <span class="t-header">Row</span> <span class="t-border">│</span> <span class="t-header">Status</span> <span class="t-border">│</span> <span class="t-header">name</span>        <span class="t-border">│</span> <span class="t-header">sales</span>                   <span class="t-border">│</span>
+<span class="t-border">├─────┼────────┼─────────────┼─────────────────────────┤</span>
+<span class="t-border">│</span> 0   <span class="t-border">│</span> <span class="t-changed">~</span>      <span class="t-border">│</span> Alice Chen  <span class="t-border">│</span> <span class="t-removed">94,230</span> &rarr; <span class="t-added">98,100</span>      <span class="t-border">│</span>
+<span class="t-border">│</span> 1   <span class="t-border">│</span>        <span class="t-border">│</span> Bob Muller  <span class="t-border">│</span> 71,450                  <span class="t-border">│</span>
+<span class="t-border">│</span> 2   <span class="t-border">│</span> <span class="t-changed">~</span>      <span class="t-border">│</span> Carol Smith <span class="t-border">│</span> <span class="t-removed">88,920</span> &rarr; <span class="t-added">91,340</span>      <span class="t-border">│</span>
+<span class="t-border">│</span> 3   <span class="t-border">│</span> <span class="t-added">+</span>      <span class="t-border">│</span> <span class="t-added">Frank Lee</span>   <span class="t-border">│</span> <span class="t-added">55,200</span>                  <span class="t-border">│</span>
+<span class="t-border">└─────┴────────┴─────────────┴─────────────────────────┘</span>
+<span class="t-meta">1 unchanged &middot; <span class="t-changed">2 modified</span> &middot; <span class="t-added">1 added</span> &middot; <span class="t-removed">0 removed</span></span></pre>
+          </div>
+        </div>
+
+        <div class="terminal-window">
+          <div class="terminal-header">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+            <span class="terminal-title">--stats &mdash; column profiling</span>
+          </div>
+          <div class="terminal-body">
+<pre><span class="t-prompt">$</span> <span class="t-cmd">mcat <span class="t-flag">--stats</span> sales_data.parquet</span>
+<span class="t-header">Stats</span>  sales_data.parquet  (<span class="t-num">1,234,567</span> rows &middot; 6 columns)
+
+ <span class="t-header">Column</span>      <span class="t-header">Type</span>       <span class="t-header">Non-Null</span>    <span class="t-header">Null</span>    <span class="t-header">Min</span>         <span class="t-header">Max</span>          <span class="t-header">Mean</span>
+ <span class="t-border">&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;</span>
+ name        <span class="t-type">STRING</span>     <span class="t-num">1,234,567</span>      0    Aaron       Zoe          &mdash;
+ age         <span class="t-type">INT64</span>      <span class="t-num">1,230,000</span>  <span class="t-num">4,567</span>    18          94           <span class="t-num">36.4</span>
+ salary      <span class="t-type">FLOAT64</span>    <span class="t-num">1,200,000</span> <span class="t-num">34,567</span>    <span class="t-num">22,000</span>      <span class="t-num">450,000</span>      <span class="t-num">87,432</span>
+ region      <span class="t-type">STRING</span>     <span class="t-num">1,234,567</span>      0    APAC        EMEA         &mdash;
+<span class="t-meta">4.2 MB &middot; parquet &middot; compression: SNAPPY</span></pre>
+          </div>
+        </div>
+
+      </div>
     </section>
 
     <!-- Usage -->
-    <section id="usage">
+    <section id="usage" class="fade-up">
       <h2>Usage</h2>
       <div class="examples">
         <div class="example-card">
-          <h3>Drop-in cat replacement</h3>
+          <h3>Drop-in cat</h3>
           <pre><code><span class="cmd">mcat</span> file.txt
 <span class="cmd">mcat</span> <span class="flag">-n</span> file.txt
 <span class="cmd">mcat</span> <span class="flag">-A</span> file.txt
@@ -211,20 +222,28 @@ echo "hello" | <span class="cmd">mcat</span></code></pre>
           <pre><code><span class="cmd">mcat</span> <span class="flag">--head</span> 10 data.parquet
 <span class="cmd">mcat</span> <span class="flag">--tail</span> 5 data.csv
 <span class="cmd">mcat</span> <span class="flag">--columns</span> name,age data.parquet
-<span class="cmd">mcat</span> <span class="flag">--count</span> data.parquet</code></pre>
+<span class="cmd">mcat</span> <span class="flag">--sample</span> 20 data.parquet</code></pre>
         </div>
         <div class="example-card">
-          <h3>Column statistics</h3>
-          <pre><code><span class="cmd">mcat</span> <span class="flag">--stats</span> data.parquet
-<span class="cmd">mcat</span> <span class="flag">--stats</span> <span class="flag">--columns</span> age,salary data.parquet
-<span class="cmd">mcat</span> <span class="flag">--stats</span> data.csv.bz2</code></pre>
+          <h3>SQL queries</h3>
+          <pre><code><span class="cmd">mcat</span> data.parquet \
+  <span class="flag">--query</span> "age > 30 AND city = 'NYC'"
+<span class="cmd">mcat</span> data.csv <span class="flag">--query</span> "salary > 50000" \
+  <span class="flag">--format</span> jsonl</code></pre>
         </div>
         <div class="example-card">
-          <h3>Compressed files</h3>
-          <pre><code><span class="cmd">mcat</span> data.parquet.gz
-<span class="cmd">mcat</span> data.csv.bz2
-<span class="cmd">mcat</span> data.jsonl.zst
-<span class="cmd">mcat</span> s3://bucket/logs.jsonl.gz <span class="flag">--head</span> 100</code></pre>
+          <h3>Sort &amp; grep</h3>
+          <pre><code><span class="cmd">mcat</span> data.parquet <span class="flag">--sort</span> age
+<span class="cmd">mcat</span> data.parquet <span class="flag">--sort</span> -age,name
+<span class="cmd">mcat</span> data.csv <span class="flag">--grep</span> "Smith"
+<span class="cmd">mcat</span> data.csv <span class="flag">--grep</span> "NYC" <span class="flag">--head</span> 5</code></pre>
+        </div>
+        <div class="example-card">
+          <h3>Diff &amp; stats</h3>
+          <pre><code><span class="cmd">mcat</span> <span class="flag">--diff</span> old.csv new.csv
+<span class="cmd">mcat</span> <span class="flag">--stats</span> data.parquet
+<span class="cmd">mcat</span> <span class="flag">--count</span> data.parquet
+<span class="cmd">mcat</span> <span class="flag">--detect</span> data.parquet</code></pre>
         </div>
         <div class="example-card">
           <h3>Remote sources</h3>
@@ -234,110 +253,102 @@ echo "hello" | <span class="cmd">mcat</span></code></pre>
 <span class="cmd">mcat</span> <span class="flag">--s3-endpoint</span> https://play.min.io \
   s3://mybucket/data.parquet</code></pre>
         </div>
+        <div class="example-card">
+          <h3>Compression &amp; output</h3>
+          <pre><code><span class="cmd">mcat</span> data.parquet.gz
+<span class="cmd">mcat</span> data.csv.zst <span class="flag">--head</span> 100
+<span class="cmd">mcat</span> data.parquet <span class="flag">-o</span> data.jsonl \
+  <span class="flag">--format</span> jsonl
+<span class="cmd">mcat</span> data.parquet <span class="flag">--pager</span></code></pre>
+        </div>
       </div>
     </section>
 
     <!-- Format Support -->
-    <section id="formats">
+    <section id="formats" class="fade-up">
       <h2>Format Support</h2>
+      <p style="color:var(--text-muted);margin-bottom:16px;font-family:var(--font-sans);">Formats are auto-detected by extension, then by magic bytes (<code>PAR1</code>, <code>Obj\x01</code>) as fallback.</p>
       <table>
         <thead>
           <tr><th>Format</th><th>Extensions</th><th>Features</th></tr>
         </thead>
         <tbody>
-          <tr><td>Parquet</td><td><code>.parquet</code> <code>.pq</code></td><td>Stream row groups, schema inspect</td></tr>
-          <tr><td>Avro</td><td><code>.avro</code></td><td>Stream blocks</td></tr>
-          <tr><td>JSONL</td><td><code>.jsonl</code> <code>.ndjson</code></td><td>Pretty-print records</td></tr>
-          <tr><td>CSV</td><td><code>.csv</code></td><td>Table with headers</td></tr>
+          <tr><td>Parquet</td><td><code>.parquet</code> <code>.pq</code></td><td>Row-group streaming, schema inspect, instant count/stats</td></tr>
+          <tr><td>Avro</td><td><code>.avro</code></td><td>Stream blocks, schema inspect</td></tr>
+          <tr><td>CSV</td><td><code>.csv</code></td><td>Table with headers, auto-detect delimiter</td></tr>
           <tr><td>TSV</td><td><code>.tsv</code></td><td>Table with headers</td></tr>
+          <tr><td>JSONL</td><td><code>.jsonl</code> <code>.ndjson</code></td><td>Pretty-print records</td></tr>
+          <tr><td>JSON</td><td><code>.json</code></td><td>Array of objects or single object</td></tr>
+          <tr><td>Excel</td><td><code>.xlsx</code> <code>.xls</code></td><td>First sheet, both legacy and modern</td></tr>
         </tbody>
       </table>
     </section>
 
     <!-- Remote Sources -->
-    <section>
+    <section class="fade-up">
       <h2>Remote Sources</h2>
-      <p>mcat uses <code>fsspec</code> under the hood for seamless remote file access. No full downloads — streaming and range requests are used where possible.</p>
+      <p style="color:var(--text-muted);margin-bottom:16px;font-family:var(--font-sans);">Streaming via <code>fsspec</code> &mdash; no full downloads, range requests where supported.</p>
       <table>
         <thead>
-          <tr><th>Protocol</th><th>Works via</th><th>Notes</th></tr>
+          <tr><th>Protocol</th><th>Backend</th><th>Notes</th></tr>
         </thead>
         <tbody>
-          <tr><td><code>s3://</code></td><td>s3fs + boto3</td><td>AWS S3, MinIO, R2, B2, Spaces</td></tr>
-          <tr><td><code>gs://</code></td><td>gcsfs</td><td>Native GCS — richest feature set</td></tr>
+          <tr><td><code>s3://</code></td><td>s3fs + boto3</td><td>AWS S3, MinIO, R2, B2, DO Spaces</td></tr>
+          <tr><td><code>gs://</code></td><td>gcsfs</td><td>Google Cloud Storage</td></tr>
+          <tr><td><code>az://</code></td><td>adlfs</td><td>Azure Blob Storage</td></tr>
           <tr><td><code>https://</code></td><td>fsspec built-in</td><td>Range requests where supported</td></tr>
-          <tr><td>Any S3-compat</td><td>s3fs + <code>--s3-endpoint</code></td><td>MinIO, Cloudflare R2, Backblaze B2, DO Spaces</td></tr>
+          <tr><td>S3-compatible</td><td>s3fs + <code>--s3-endpoint</code></td><td>MinIO, Cloudflare R2, Backblaze B2</td></tr>
         </tbody>
       </table>
     </section>
 
     <!-- Authentication -->
-    <section id="auth">
+    <section id="auth" class="fade-up">
       <h2>Authentication</h2>
+      <p style="color:var(--text-muted);margin-bottom:16px;font-family:var(--font-sans);">Zero-config auth &mdash; mcat uses credentials you've already set up for your cloud provider.</p>
       <div class="tabs">
         <button class="tab-btn active" data-tab="auth-aws">AWS S3</button>
         <button class="tab-btn" data-tab="auth-s3compat">S3-Compatible</button>
         <button class="tab-btn" data-tab="auth-gcs">Google Cloud</button>
       </div>
       <div class="tab-content active" id="tab-auth-aws">
-        <pre><code><span class="comment"># Option 1: AWS CLI (recommended)</span>
-<span class="cmd">aws configure</span>   <span class="comment"># stores in ~/.aws/credentials</span>
+        <pre><code><span class="comment"># AWS CLI (recommended)</span>
+<span class="cmd">aws configure</span>
 mcat s3://my-bucket/data.parquet
 
-<span class="comment"># Option 2: Environment variables</span>
-<span class="cmd">export</span> AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
-<span class="cmd">export</span> AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-<span class="cmd">export</span> AWS_DEFAULT_REGION=us-east-1
+<span class="comment"># Environment variables</span>
+<span class="cmd">export</span> AWS_ACCESS_KEY_ID=AKIA...
+<span class="cmd">export</span> AWS_SECRET_ACCESS_KEY=...
 mcat s3://my-bucket/data.parquet
 
-<span class="comment"># Option 3: Named profile</span>
-AWS_PROFILE=myprofile mcat s3://my-bucket/data.parquet
-
-<span class="comment"># Option 4: Temporary session token (MFA, assume-role)</span>
-<span class="cmd">export</span> AWS_SESSION_TOKEN=AQoXnyc4lcK4w4OIAHPOjgWDSB...
-mcat s3://my-bucket/data.parquet</code></pre>
+<span class="comment"># Named profile</span>
+AWS_PROFILE=prod mcat s3://my-bucket/data.parquet</code></pre>
       </div>
       <div class="tab-content" id="tab-auth-s3compat">
-        <pre><code><span class="comment"># Via --s3-endpoint flag</span>
+        <pre><code><span class="comment"># Per-command endpoint</span>
 mcat <span class="flag">--s3-endpoint</span> https://play.min.io s3://mybucket/data.parquet
 
-<span class="comment"># Via environment variable</span>
-<span class="cmd">export</span> FSSPEC_S3_ENDPOINT_URL=https://play.min.io
+<span class="comment"># Environment variable</span>
+<span class="cmd">export</span> AWS_ENDPOINT_URL=https://play.min.io
 mcat s3://mybucket/data.parquet
 
-<span class="comment"># Cloudflare R2 example</span>
-mcat <span class="flag">--s3-endpoint</span> https://&lt;account-id&gt;.r2.cloudflarestorage.com s3://bucket/file.parquet
-
-<span class="comment"># MinIO with credentials</span>
-AWS_ACCESS_KEY_ID=minioadmin AWS_SECRET_ACCESS_KEY=minioadmin \
-  mcat <span class="flag">--s3-endpoint</span> http://localhost:9000 s3://mybucket/data.parquet</code></pre>
+<span class="comment"># Cloudflare R2</span>
+mcat <span class="flag">--s3-endpoint</span> https://&lt;account&gt;.r2.cloudflarestorage.com \
+  s3://bucket/file.parquet</code></pre>
       </div>
       <div class="tab-content" id="tab-auth-gcs">
-        <pre><code><span class="comment"># Option 1: gcloud CLI (recommended)</span>
+        <pre><code><span class="comment"># gcloud CLI (recommended)</span>
 <span class="cmd">gcloud auth</span> application-default login
 mcat gs://my-bucket/data.parquet
 
-<span class="comment"># Option 2: Service account key</span>
-<span class="cmd">export</span> GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
+<span class="comment"># Service account key</span>
+<span class="cmd">export</span> GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json
 mcat gs://my-bucket/data.parquet</code></pre>
       </div>
     </section>
 
-    <!-- Contributing -->
-    <section>
-      <h2>Contributing</h2>
-      <pre><code><span class="comment"># Clone and install dev dependencies</span>
-git clone https://github.com/christyjacob4/mcat.git
-cd mcat
-uv sync
-
-<span class="comment"># Run locally</span>
-uv run mcat --help</code></pre>
-      <p>PRs welcome. Keep it simple, keep it fast.</p>
-    </section>
-
     <footer>
-      <p>Built by <a href="https://github.com/christyjacob4">Christy Jacob</a> · MIT License</p>
+      <p>Built by <a href="https://github.com/christyjacob4">Christy Jacob</a> &middot; MIT License</p>
       <div class="footer-links">
         <a href="https://github.com/christyjacob4/mcat">GitHub</a>
         <a href="https://pypi.org/project/mcat/">PyPI</a>
@@ -363,24 +374,30 @@ uv run mcat --help</code></pre>
       });
     });
 
-    // Copy buttons on all <pre> blocks
+    // Copy buttons
     document.querySelectorAll('pre').forEach(pre => {
-      // Skip terminal demos
       if (pre.closest('.terminal-body')) return;
       const btn = document.createElement('button');
       btn.className = 'copy-btn';
-      btn.textContent = '📋';
-      btn.title = 'Copy to clipboard';
+      btn.textContent = 'Copy';
       btn.addEventListener('click', () => {
-        const text = pre.textContent;
-        navigator.clipboard.writeText(text).then(() => {
+        navigator.clipboard.writeText(pre.textContent).then(() => {
           btn.textContent = 'Copied!';
-          setTimeout(() => { btn.textContent = '📋'; }, 1500);
+          setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
         });
       });
-      pre.style.position = 'relative';
       pre.appendChild(btn);
     });
+
+    // Scroll fade-in
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
   </script>
 
 </body>

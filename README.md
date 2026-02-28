@@ -8,22 +8,6 @@
 
 ---
 
-## Demo
-
-```
-$ mcat sales_data.parquet
-┌─────────────┬──────────┬────────┬─────────┐
-│ name        │ region   │  sales │ quarter │
-├─────────────┼──────────┼────────┼─────────┤
-│ Alice Chen  │ APAC     │ 94,230 │ Q1 2024 │
-│ Bob Müller  │ EMEA     │ 71,450 │ Q1 2024 │
-│ Carol Smith │ Americas │ 88,920 │ Q1 2024 │
-└─────────────┴──────────┴────────┴─────────┘
-3 rows · 4 columns · parquet
-```
-
----
-
 ## Why mcat?
 
 `cat` is everywhere, but it can't read Parquet or Avro. The existing tools (`parquet-cli`, `avro-tools`) are heavy Java dependencies that take ages to install. `mcat` is a single `pip install` (or `uv tool install`) that just works -- all GNU cat flags, plus structured format support and remote sources out of the box.
