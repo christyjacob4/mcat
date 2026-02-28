@@ -134,8 +134,6 @@ def _sort_rows(rows: list[dict], sort_spec: str) -> list[dict]:
 
 def _output_rows(rows: list[dict], opts: dict):
     """Output rows in the requested format."""
-    if opts.get("grep"):
-        rows = _grep_rows(rows, opts["grep"])
     sample_n = opts.get("sample")
     if sample_n is not None:
         rows = _sample_rows(rows, sample_n)
@@ -164,7 +162,9 @@ def _apply_head_tail(rows: list[dict], opts: dict) -> list[dict]:
 
 
 def _finalize_rows(rows: list[dict], opts: dict):
-    """Apply sort, head/tail, then output."""
+    """Apply grep, sort, head/tail, then output."""
+    if opts.get("grep"):
+        rows = _grep_rows(rows, opts["grep"])
     sort_spec = opts.get("sort")
     if sort_spec:
         rows = _sort_rows(rows, sort_spec)
@@ -200,8 +200,8 @@ def _handle_parquet(path: str, opts: dict):
     show_progress = num_row_groups > 1 and _should_show_progress()
 
     # Smart --tail for Parquet: read only the last row group(s) needed
-    # Disable optimization when --sort is present (need all rows to sort)
-    if opts.get("tail") and not opts.get("head") and not opts.get("sort"):
+    # Disable optimization when --sort or --grep is present (need all rows first)
+    if opts.get("tail") and not opts.get("head") and not opts.get("sort") and not opts.get("grep"):
         tail_n = opts["tail"]
         rows: list[dict] = []
         # Read row groups from the end
@@ -232,11 +232,11 @@ def _handle_parquet(path: str, opts: dict):
                     if len(rows) >= tail_n:
                         rows = rows[-tail_n:]
                         break
-        _output_rows(rows, opts)
+        _finalize_rows(rows, opts)
         return
 
-    # Disable early-exit head optimization when --sort is present
-    limit = opts.get("head") if not opts.get("sort") else None
+    # Disable early-exit head optimization when --sort or --grep is present
+    limit = opts.get("head") if not (opts.get("sort") or opts.get("grep")) else None
     rows = []
 
     if show_progress:
@@ -325,8 +325,8 @@ def _handle_avro(path: str, opts: dict):
         return
 
     col_filter = opts.get("columns")
-    # Disable early-exit head optimization when --sort is present
-    limit = opts.get("head") if not opts.get("sort") else None
+    # Disable early-exit head optimization when --sort or --grep is present
+    limit = opts.get("head") if not (opts.get("sort") or opts.get("grep")) else None
     rows: list[dict] = []
 
     if _should_show_progress():
@@ -356,8 +356,8 @@ def _handle_avro(path: str, opts: dict):
 def _handle_jsonl(path: str, opts: dict):
     f = _open_file(path, "r", s3_endpoint=opts.get("s3_endpoint"))
     col_filter = opts.get("columns")
-    # Disable early-exit head optimization when --sort is present
-    limit = opts.get("head") if not opts.get("sort") else None
+    # Disable early-exit head optimization when --sort or --grep is present
+    limit = opts.get("head") if not (opts.get("sort") or opts.get("grep")) else None
 
     if opts.get("count"):
         count = sum(1 for line in f if line.strip())
@@ -426,8 +426,8 @@ def _handle_csv(path: str, opts: dict, delimiter: str = ","):
         f.close()
         return
 
-    # Disable early-exit head optimization when --sort is present
-    limit = opts.get("head") if not opts.get("sort") else None
+    # Disable early-exit head optimization when --sort or --grep is present
+    limit = opts.get("head") if not (opts.get("sort") or opts.get("grep")) else None
     rows: list[dict] = []
 
     if _should_show_progress():
@@ -626,8 +626,8 @@ def _handle_with_file_obj(path: str, fmt: str, opts: dict, file_obj):
             print(count)
             return
 
-        # Disable early-exit head optimization when --sort is present
-        limit = opts.get("head") if not opts.get("sort") else None
+        # Disable early-exit head optimization when --sort or --grep is present
+        limit = opts.get("head") if not (opts.get("sort") or opts.get("grep")) else None
         rows: list[dict] = []
         if _should_show_progress():
             with _make_spinner_progress() as progress:
@@ -657,8 +657,8 @@ def _handle_with_file_obj(path: str, fmt: str, opts: dict, file_obj):
             print(count)
             return
 
-        # Disable early-exit head optimization when --sort is present
-        limit = opts.get("head") if not opts.get("sort") else None
+        # Disable early-exit head optimization when --sort or --grep is present
+        limit = opts.get("head") if not (opts.get("sort") or opts.get("grep")) else None
         rows = []
         if _should_show_progress():
             with _make_spinner_progress() as progress:
@@ -707,8 +707,8 @@ def _handle_with_file_obj(path: str, fmt: str, opts: dict, file_obj):
             return
 
         col_filter = opts.get("columns")
-        # Disable early-exit head optimization when --sort is present
-        limit = opts.get("head") if not opts.get("sort") else None
+        # Disable early-exit head optimization when --sort or --grep is present
+        limit = opts.get("head") if not (opts.get("sort") or opts.get("grep")) else None
         rows = []
         if _should_show_progress():
             with _make_spinner_progress() as progress:
