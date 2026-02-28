@@ -1,6 +1,7 @@
 import csv
 import json
 import os
+import pandas as pd
 
 ROWS = [
     {"name": "Alice", "age": 30, "city": "NYC", "score": 95.5},
@@ -13,33 +14,29 @@ ROWS = [
 FIXTURE_DIR = os.path.join(os.path.dirname(__file__), "fixtures")
 os.makedirs(FIXTURE_DIR, exist_ok=True)
 
-# CSV
 with open(os.path.join(FIXTURE_DIR, "sample.csv"), "w", newline="") as f:
     w = csv.DictWriter(f, fieldnames=["name", "age", "city", "score"])
     w.writeheader()
     w.writerows(ROWS)
 
-# TSV
 with open(os.path.join(FIXTURE_DIR, "sample.tsv"), "w", newline="") as f:
     w = csv.DictWriter(f, fieldnames=["name", "age", "city", "score"], delimiter="\t")
     w.writeheader()
     w.writerows(ROWS)
 
-# JSON
 with open(os.path.join(FIXTURE_DIR, "sample.json"), "w") as f:
     json.dump(ROWS, f, indent=2)
 
-# JSONL
 with open(os.path.join(FIXTURE_DIR, "sample.jsonl"), "w") as f:
     for row in ROWS:
         f.write(json.dumps(row) + "\n")
 
 # Parquet
-import pandas as pd
 df = pd.DataFrame(ROWS)
+for col in df.select_dtypes(include=["string", "object"]).columns:
+    df[col] = df[col].astype("object")
 df.to_parquet(os.path.join(FIXTURE_DIR, "sample.parquet"), engine="fastparquet")
 
-# Avro
 import fastavro
 avro_schema = {
     "type": "record",
@@ -54,7 +51,6 @@ avro_schema = {
 with open(os.path.join(FIXTURE_DIR, "sample.avro"), "wb") as f:
     fastavro.writer(f, avro_schema, ROWS)
 
-# Excel
 import openpyxl
 wb = openpyxl.Workbook()
 ws = wb.active
