@@ -7,10 +7,36 @@ import sys
 from typing import Any
 
 from rich.console import Console
+from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
 from rich.table import Table
 
 console = Console()
 err_console = Console(stderr=True)
+
+
+def _should_show_progress() -> bool:
+    """Show progress only when both stdout and stderr are TTYs."""
+    return sys.stderr.isatty() and sys.stdout.isatty()
+
+
+def _make_bar_progress() -> Progress:
+    """Create a progress bar with spinner, text, bar, and percentage (for known totals)."""
+    return Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TaskProgressColumn(),
+        console=Console(stderr=True),
+    )
+
+
+def _make_spinner_progress() -> Progress:
+    """Create a spinner-only progress indicator (for unknown totals)."""
+    return Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=Console(stderr=True),
+    )
 
 
 def _storage_options(path: str, s3_endpoint: str | None = None) -> dict:
@@ -119,41 +145,76 @@ def _handle_parquet(path: str, opts: dict):
 
     col_filter = opts.get("columns")
 
+    num_row_groups = pf.metadata.num_row_groups
+    show_progress = num_row_groups > 1 and _should_show_progress()
+
     # Smart --tail for Parquet: read only the last row group(s) needed
     if opts.get("tail") and not opts.get("head"):
         tail_n = opts["tail"]
-        total_rgs = pf.metadata.num_row_groups
         rows: list[dict] = []
         # Read row groups from the end
-        for i in range(total_rgs - 1, -1, -1):
-            rg = pf.read_row_group(i, columns=col_filter)
-            batch_rows = rg.to_pydict()
-            if batch_rows:
-                keys = list(batch_rows.keys())
-                n = len(batch_rows[keys[0]])
-                chunk = [{k: batch_rows[k][j] for k in keys} for j in range(n)]
-                rows = chunk + rows
-                if len(rows) >= tail_n:
-                    rows = rows[-tail_n:]
-                    break
+        if show_progress:
+            with _make_bar_progress() as progress:
+                task = progress.add_task("Reading...", total=num_row_groups)
+                for i in range(num_row_groups - 1, -1, -1):
+                    rg = pf.read_row_group(i, columns=col_filter)
+                    batch_rows = rg.to_pydict()
+                    if batch_rows:
+                        keys = list(batch_rows.keys())
+                        n = len(batch_rows[keys[0]])
+                        chunk = [{k: batch_rows[k][j] for k in keys} for j in range(n)]
+                        rows = chunk + rows
+                    progress.update(task, advance=1)
+                    if len(rows) >= tail_n:
+                        rows = rows[-tail_n:]
+                        break
+        else:
+            for i in range(num_row_groups - 1, -1, -1):
+                rg = pf.read_row_group(i, columns=col_filter)
+                batch_rows = rg.to_pydict()
+                if batch_rows:
+                    keys = list(batch_rows.keys())
+                    n = len(batch_rows[keys[0]])
+                    chunk = [{k: batch_rows[k][j] for k in keys} for j in range(n)]
+                    rows = chunk + rows
+                    if len(rows) >= tail_n:
+                        rows = rows[-tail_n:]
+                        break
         _output_rows(rows, opts)
         return
 
     limit = opts.get("head")
     rows = []
 
-    for i in range(pf.metadata.num_row_groups):
-        rg = pf.read_row_group(i, columns=col_filter)
-        batch_rows = rg.to_pydict()
-        if batch_rows:
-            keys = list(batch_rows.keys())
-            n = len(batch_rows[keys[0]])
-            for j in range(n):
-                rows.append({k: batch_rows[k][j] for k in keys})
+    if show_progress:
+        with _make_bar_progress() as progress:
+            task = progress.add_task("Reading...", total=num_row_groups)
+            for i in range(num_row_groups):
+                rg = pf.read_row_group(i, columns=col_filter)
+                batch_rows = rg.to_pydict()
+                if batch_rows:
+                    keys = list(batch_rows.keys())
+                    n = len(batch_rows[keys[0]])
+                    for j in range(n):
+                        rows.append({k: batch_rows[k][j] for k in keys})
+                        if limit and len(rows) >= limit:
+                            break
+                progress.update(task, advance=1)
                 if limit and len(rows) >= limit:
                     break
-        if limit and len(rows) >= limit:
-            break
+    else:
+        for i in range(num_row_groups):
+            rg = pf.read_row_group(i, columns=col_filter)
+            batch_rows = rg.to_pydict()
+            if batch_rows:
+                keys = list(batch_rows.keys())
+                n = len(batch_rows[keys[0]])
+                for j in range(n):
+                    rows.append({k: batch_rows[k][j] for k in keys})
+                    if limit and len(rows) >= limit:
+                        break
+            if limit and len(rows) >= limit:
+                break
 
     rows = _apply_head_tail(rows, opts)
     _output_rows(rows, opts)
@@ -216,12 +277,23 @@ def _handle_avro(path: str, opts: dict):
     limit = opts.get("head")
     rows: list[dict] = []
 
-    for record in reader:
-        if col_filter:
-            record = {k: v for k, v in record.items() if k in col_filter}
-        rows.append(record)
-        if limit and len(rows) >= limit:
-            break
+    if _should_show_progress():
+        with _make_spinner_progress() as progress:
+            task = progress.add_task("Reading rows...", total=None)
+            for record in reader:
+                if col_filter:
+                    record = {k: v for k, v in record.items() if k in col_filter}
+                rows.append(record)
+                progress.update(task, description=f"Reading... {len(rows)} rows")
+                if limit and len(rows) >= limit:
+                    break
+    else:
+        for record in reader:
+            if col_filter:
+                record = {k: v for k, v in record.items() if k in col_filter}
+            rows.append(record)
+            if limit and len(rows) >= limit:
+                break
 
     f.close()
     rows = _apply_head_tail(rows, opts)
@@ -243,20 +315,39 @@ def _handle_jsonl(path: str, opts: dict):
 
     rows: list[dict] = []
 
-    for line in f:
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            obj = json.loads(line)
-        except json.JSONDecodeError:
-            print(line)
-            continue
-        if col_filter:
-            obj = {k: v for k, v in obj.items() if k in col_filter}
-        rows.append(obj)
-        if limit and len(rows) >= limit:
-            break
+    if _should_show_progress():
+        with _make_spinner_progress() as progress:
+            task = progress.add_task("Reading rows...", total=None)
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                except json.JSONDecodeError:
+                    print(line)
+                    continue
+                if col_filter:
+                    obj = {k: v for k, v in obj.items() if k in col_filter}
+                rows.append(obj)
+                progress.update(task, description=f"Reading... {len(rows)} rows")
+                if limit and len(rows) >= limit:
+                    break
+    else:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                obj = json.loads(line)
+            except json.JSONDecodeError:
+                print(line)
+                continue
+            if col_filter:
+                obj = {k: v for k, v in obj.items() if k in col_filter}
+            rows.append(obj)
+            if limit and len(rows) >= limit:
+                break
 
     f.close()
     rows = _apply_head_tail(rows, opts)
@@ -287,12 +378,23 @@ def _handle_csv(path: str, opts: dict, delimiter: str = ","):
     limit = opts.get("head")
     rows: list[dict] = []
 
-    for record in reader:
-        if col_filter:
-            record = {k: v for k, v in record.items() if k in col_filter}
-        rows.append(record)
-        if limit and len(rows) >= limit:
-            break
+    if _should_show_progress():
+        with _make_spinner_progress() as progress:
+            task = progress.add_task("Reading rows...", total=None)
+            for record in reader:
+                if col_filter:
+                    record = {k: v for k, v in record.items() if k in col_filter}
+                rows.append(record)
+                progress.update(task, description=f"Reading... {len(rows)} rows")
+                if limit and len(rows) >= limit:
+                    break
+    else:
+        for record in reader:
+            if col_filter:
+                record = {k: v for k, v in record.items() if k in col_filter}
+            rows.append(record)
+            if limit and len(rows) >= limit:
+                break
 
     f.close()
     rows = _apply_head_tail(rows, opts)
@@ -478,12 +580,23 @@ def _handle_with_file_obj(path: str, fmt: str, opts: dict, file_obj):
 
         limit = opts.get("head")
         rows: list[dict] = []
-        for record in reader:
-            if col_filter:
-                record = {k: v for k, v in record.items() if k in col_filter}
-            rows.append(record)
-            if limit and len(rows) >= limit:
-                break
+        if _should_show_progress():
+            with _make_spinner_progress() as progress:
+                task = progress.add_task("Reading rows...", total=None)
+                for record in reader:
+                    if col_filter:
+                        record = {k: v for k, v in record.items() if k in col_filter}
+                    rows.append(record)
+                    progress.update(task, description=f"Reading... {len(rows)} rows")
+                    if limit and len(rows) >= limit:
+                        break
+        else:
+            for record in reader:
+                if col_filter:
+                    record = {k: v for k, v in record.items() if k in col_filter}
+                rows.append(record)
+                if limit and len(rows) >= limit:
+                    break
         rows = _apply_head_tail(rows, opts)
         _output_rows(rows, opts)
 
@@ -498,20 +611,39 @@ def _handle_with_file_obj(path: str, fmt: str, opts: dict, file_obj):
 
         limit = opts.get("head")
         rows = []
-        for line in text_f:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                obj = json.loads(line)
-            except json.JSONDecodeError:
-                print(line)
-                continue
-            if col_filter:
-                obj = {k: v for k, v in obj.items() if k in col_filter}
-            rows.append(obj)
-            if limit and len(rows) >= limit:
-                break
+        if _should_show_progress():
+            with _make_spinner_progress() as progress:
+                task = progress.add_task("Reading rows...", total=None)
+                for line in text_f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        obj = json.loads(line)
+                    except json.JSONDecodeError:
+                        print(line)
+                        continue
+                    if col_filter:
+                        obj = {k: v for k, v in obj.items() if k in col_filter}
+                    rows.append(obj)
+                    progress.update(task, description=f"Reading... {len(rows)} rows")
+                    if limit and len(rows) >= limit:
+                        break
+        else:
+            for line in text_f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                except json.JSONDecodeError:
+                    print(line)
+                    continue
+                if col_filter:
+                    obj = {k: v for k, v in obj.items() if k in col_filter}
+                rows.append(obj)
+                if limit and len(rows) >= limit:
+                    break
         rows = _apply_head_tail(rows, opts)
         _output_rows(rows, opts)
 
@@ -529,12 +661,23 @@ def _handle_with_file_obj(path: str, fmt: str, opts: dict, file_obj):
         col_filter = opts.get("columns")
         limit = opts.get("head")
         rows = []
-        for record in reader:
-            if col_filter:
-                record = {k: v for k, v in record.items() if k in col_filter}
-            rows.append(record)
-            if limit and len(rows) >= limit:
-                break
+        if _should_show_progress():
+            with _make_spinner_progress() as progress:
+                task = progress.add_task("Reading rows...", total=None)
+                for record in reader:
+                    if col_filter:
+                        record = {k: v for k, v in record.items() if k in col_filter}
+                    rows.append(record)
+                    progress.update(task, description=f"Reading... {len(rows)} rows")
+                    if limit and len(rows) >= limit:
+                        break
+        else:
+            for record in reader:
+                if col_filter:
+                    record = {k: v for k, v in record.items() if k in col_filter}
+                rows.append(record)
+                if limit and len(rows) >= limit:
+                    break
         rows = _apply_head_tail(rows, opts)
         _output_rows(rows, opts)
 
