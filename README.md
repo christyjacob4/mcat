@@ -71,6 +71,13 @@ mcat data.csv --sample 5 --format jsonl  # 5 random rows as JSONL
 mcat data.parquet --detect       # Print detected format
 ```
 
+Comparing two structured files:
+
+```bash
+mcat --diff old.csv new.csv
+mcat --diff prod.parquet staging.parquet --columns name,age
+```
+
 Column statistics (instant for Parquet — reads metadata only):
 
 ```bash
@@ -133,6 +140,7 @@ PAGER="more" mcat data.parquet --pager   # use 'more' instead of 'less'
 | `--sample` | | Random sample of N rows |
 | `--count` | `-c` | Print row count only |
 | `--stats` | | Print column statistics summary |
+| `--diff` | | Compare two structured files side by side |
 | `--detect` | | Print detected format and exit |
 | `--output` | `-o` | Write output to file instead of stdout |
 | `--pager` | | Pipe output through pager (`less`/`more`) |
