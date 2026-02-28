@@ -114,12 +114,22 @@ def main(
         if not files or len(files) != 2:
             typer.echo("mcat: --diff requires exactly 2 files", err=True)
             raise SystemExit(1)
-        struct_opts = {
-            "columns": columns.split(",") if columns else None,
-            "s3_endpoint": s3_endpoint,
-        }
-        from mcat.diff import diff_files
-        diff_files(files[0], files[1], struct_opts)
+        # Handle --output
+        if output:
+            output_file = open(output, "w")
+            original_stdout = sys.stdout
+            sys.stdout = output_file
+        try:
+            struct_opts = {
+                "columns": columns.split(",") if columns else None,
+                "s3_endpoint": s3_endpoint,
+            }
+            from mcat.diff import diff_files
+            diff_files(files[0], files[1], struct_opts)
+        finally:
+            if output:
+                sys.stdout = original_stdout
+                output_file.close()
         raise SystemExit(0)
 
     # Resolve combined flags

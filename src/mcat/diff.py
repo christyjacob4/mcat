@@ -123,17 +123,17 @@ def _load_rows(path: str, opts: dict) -> list[dict]:
     elif fmt == "avro":
         return _load_avro(path, s3_endpoint)
     elif fmt == "jsonl":
-        return _load_jsonl(path, s3_endpoint)
+        return _load_jsonl(path, opts)
     elif fmt == "csv":
-        return _load_csv(path, s3_endpoint, delimiter=",")
+        return _load_csv(path, opts, delimiter=",")
     elif fmt == "tsv":
-        return _load_csv(path, s3_endpoint, delimiter="\t")
+        return _load_csv(path, opts, delimiter="\t")
     elif fmt == "excel":
         return _load_excel(path, s3_endpoint)
     elif fmt in ("feather", "arrow"):
         return _load_feather(path, fmt, s3_endpoint)
     elif fmt == "json":
-        return _load_json(path, s3_endpoint)
+        return _load_json(path, opts)
     else:
         raise ValueError(f"Unsupported format for diff: {fmt}")
 
@@ -187,31 +187,78 @@ def _load_avro(path: str, s3_endpoint: str | None) -> list[dict]:
     return rows
 
 
-def _load_jsonl(path: str, s3_endpoint: str | None) -> list[dict]:
+def _load_jsonl(path: str, opts: dict) -> list[dict]:
+    from mcat.compression import detect_compression, decompress_open
     from mcat.structured import _open_file
 
-    f = _open_file(path, "r", s3_endpoint=s3_endpoint)
-    rows: list[dict] = []
-    for line in f:
-        line = line.strip()
-        if not line:
-            continue
+    s3_endpoint = opts.get("s3_endpoint")
+    comp = detect_compression(path)
+    if comp and comp != "tar":
+        raw_f = _open_file(path, "rb", s3_endpoint=s3_endpoint)
+        decompressed = decompress_open(raw_f, comp)
+        text_f = io.TextIOWrapper(decompressed, encoding="utf-8")
+        rows: list[dict] = []
+        for line in text_f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rows.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+        text_f.close()
         try:
-            rows.append(json.loads(line))
-        except json.JSONDecodeError:
-            continue
-    f.close()
-    return rows
+            decompressed.close()
+        except Exception:
+            pass
+        try:
+            raw_f.close()
+        except Exception:
+            pass
+        return rows
+    else:
+        f = _open_file(path, "r", s3_endpoint=s3_endpoint)
+        rows = []
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rows.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+        f.close()
+        return rows
 
 
-def _load_csv(path: str, s3_endpoint: str | None, delimiter: str = ",") -> list[dict]:
+def _load_csv(path: str, opts: dict, delimiter: str = ",") -> list[dict]:
+    from mcat.compression import detect_compression, decompress_open
     from mcat.structured import _open_file
 
-    f = _open_file(path, "r", s3_endpoint=s3_endpoint)
-    reader = csv_mod.DictReader(f, delimiter=delimiter)
-    rows = list(reader)
-    f.close()
-    return rows
+    s3_endpoint = opts.get("s3_endpoint")
+    comp = detect_compression(path)
+    if comp and comp != "tar":
+        raw_f = _open_file(path, "rb", s3_endpoint=s3_endpoint)
+        decompressed = decompress_open(raw_f, comp)
+        text_f = io.TextIOWrapper(decompressed, encoding="utf-8")
+        reader = csv_mod.DictReader(text_f, delimiter=delimiter)
+        rows = list(reader)
+        text_f.close()
+        try:
+            decompressed.close()
+        except Exception:
+            pass
+        try:
+            raw_f.close()
+        except Exception:
+            pass
+        return rows
+    else:
+        f = _open_file(path, "r", s3_endpoint=s3_endpoint)
+        reader = csv_mod.DictReader(f, delimiter=delimiter)
+        rows = list(reader)
+        f.close()
+        return rows
 
 
 def _load_excel(path: str, s3_endpoint: str | None) -> list[dict]:
@@ -268,12 +315,30 @@ def _load_feather(path: str, fmt: str, s3_endpoint: str | None) -> list[dict]:
     return [{k: rows_dict[k][i] for k in keys} for i in range(n)]
 
 
-def _load_json(path: str, s3_endpoint: str | None) -> list[dict]:
+def _load_json(path: str, opts: dict) -> list[dict]:
+    from mcat.compression import detect_compression, decompress_open
     from mcat.structured import _open_file
 
-    f = _open_file(path, "r", s3_endpoint=s3_endpoint)
-    data = json.load(f)
-    f.close()
+    s3_endpoint = opts.get("s3_endpoint")
+    comp = detect_compression(path)
+    if comp and comp != "tar":
+        raw_f = _open_file(path, "rb", s3_endpoint=s3_endpoint)
+        decompressed = decompress_open(raw_f, comp)
+        text_f = io.TextIOWrapper(decompressed, encoding="utf-8")
+        data = json.load(text_f)
+        text_f.close()
+        try:
+            decompressed.close()
+        except Exception:
+            pass
+        try:
+            raw_f.close()
+        except Exception:
+            pass
+    else:
+        f = _open_file(path, "r", s3_endpoint=s3_endpoint)
+        data = json.load(f)
+        f.close()
 
     if isinstance(data, dict):
         data = [data]
