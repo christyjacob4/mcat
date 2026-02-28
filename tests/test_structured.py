@@ -13,14 +13,14 @@ def test_csv_jsonl(sample_csv):
     result = subprocess.run([sys.executable, "-m", "mcat", sample_csv, "--format", "jsonl"], capture_output=True, text=True)
     assert result.returncode == 0
     lines = [l for l in result.stdout.strip().split("\n") if l]
-    assert len(lines) == 3
+    assert len(lines) == 5
     first = json.loads(lines[0])
     assert first["name"] == "Alice"
 
 
 def test_csv_count(sample_csv):
     result = subprocess.run([sys.executable, "-m", "mcat", "-c", sample_csv], capture_output=True, text=True)
-    assert result.stdout.strip() == "3"
+    assert result.stdout.strip() == "5"
 
 
 def test_csv_head(sample_csv):
@@ -49,7 +49,7 @@ def test_jsonl_read(sample_jsonl):
 
 def test_jsonl_count(sample_jsonl):
     result = subprocess.run([sys.executable, "-m", "mcat", "-c", sample_jsonl], capture_output=True, text=True)
-    assert result.stdout.strip() == "3"
+    assert result.stdout.strip() == "5"
 
 
 def test_json_read(sample_json):
@@ -66,7 +66,7 @@ def test_parquet_read(sample_parquet):
 
 def test_parquet_count(sample_parquet):
     result = subprocess.run([sys.executable, "-m", "mcat", "-c", sample_parquet], capture_output=True, text=True)
-    assert result.stdout.strip() == "3"
+    assert result.stdout.strip() == "5"
 
 
 def test_parquet_schema(sample_parquet):
@@ -77,7 +77,7 @@ def test_parquet_schema(sample_parquet):
 def test_parquet_jsonl(sample_parquet):
     result = subprocess.run([sys.executable, "-m", "mcat", sample_parquet, "--format", "jsonl"], capture_output=True, text=True)
     lines = [l for l in result.stdout.strip().split("\n") if l]
-    assert len(lines) == 3
+    assert len(lines) == 5
 
 
 def test_tsv_read(sample_tsv):
@@ -99,4 +99,4 @@ def test_output_flag(sample_csv, tmp_dir):
     assert os.path.exists(out)
     with open(out) as f:
         lines = f.readlines()
-    assert len(lines) == 3
+    assert len(lines) == 5
