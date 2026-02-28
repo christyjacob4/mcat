@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import os
+import sys
 from typing import Any
 
 from rich.console import Console
+from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
 console = Console()
@@ -369,12 +371,31 @@ def stats_streaming(path: str, fmt: str, columns: list[str] | None = None, s3_en
             if not file_obj:
                 f.close()
 
-    for row in _iter_rows():
-        total_rows += 1
-        for k, v in row.items():
-            if columns and k not in columns:
-                continue
-            _update(k, v)
+    def _should_show_progress() -> bool:
+        """Show progress only when both stdout and stderr are TTYs."""
+        return sys.stderr.isatty() and sys.stdout.isatty()
+
+    if _should_show_progress():
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=Console(stderr=True),
+        ) as progress:
+            task = progress.add_task("Computing stats...", total=None)
+            for row in _iter_rows():
+                total_rows += 1
+                for k, v in row.items():
+                    if columns and k not in columns:
+                        continue
+                    _update(k, v)
+                progress.update(task, description=f"Computing stats... {total_rows} rows")
+    else:
+        for row in _iter_rows():
+            total_rows += 1
+            for k, v in row.items():
+                if columns and k not in columns:
+                    continue
+                _update(k, v)
 
     # Build stats list
     if columns:
