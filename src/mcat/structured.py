@@ -80,8 +80,9 @@ def _sample_rows(rows: list[dict], n: int) -> list[dict]:
 
 def _output_rows(rows: list[dict], opts: dict):
     """Output rows in the requested format."""
-    if opts.get("sample"):
-        rows = _sample_rows(rows, opts["sample"])
+    sample_n = opts.get("sample")
+    if sample_n is not None:
+        rows = _sample_rows(rows, sample_n)
     fmt = opts.get("format") or "table"
     columns = opts.get("columns")
 
