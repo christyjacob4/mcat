@@ -104,11 +104,25 @@ def _sample_rows(rows: list[dict], n: int) -> list[dict]:
     return random.sample(rows, n)
 
 
+def _sort_rows(rows: list[dict], sort_spec: str) -> list[dict]:
+    """Sort rows by column specification. '-col' for descending."""
+    if not sort_spec or not rows:
+        return rows
+    sort_keys = [s.strip() for s in sort_spec.split(",")]
+    # Build sort: parse each key for direction, apply in reverse for stable multi-key sort
+    for key in reversed(sort_keys):
+        desc = key.startswith("-")
+        col = key.lstrip("-")
+        rows = sorted(rows, key=lambda r, c=col: (r.get(c) is None, r.get(c, "")), reverse=desc)
+    return rows
+
+
 def _output_rows(rows: list[dict], opts: dict):
     """Output rows in the requested format."""
     sample_n = opts.get("sample")
     if sample_n is not None:
         rows = _sample_rows(rows, sample_n)
+
     fmt = opts.get("format") or "table"
     columns = opts.get("columns")
 
@@ -130,6 +144,15 @@ def _apply_head_tail(rows: list[dict], opts: dict) -> list[dict]:
     if opts.get("tail"):
         rows = rows[-opts["tail"]:]
     return rows
+
+
+def _finalize_rows(rows: list[dict], opts: dict):
+    """Apply sort, head/tail, then output."""
+    sort_spec = opts.get("sort")
+    if sort_spec:
+        rows = _sort_rows(rows, sort_spec)
+    rows = _apply_head_tail(rows, opts)
+    _output_rows(rows, opts)
 
 
 # --- Parquet ---
@@ -160,7 +183,8 @@ def _handle_parquet(path: str, opts: dict):
     show_progress = num_row_groups > 1 and _should_show_progress()
 
     # Smart --tail for Parquet: read only the last row group(s) needed
-    if opts.get("tail") and not opts.get("head"):
+    # Disable optimization when --sort is present (need all rows to sort)
+    if opts.get("tail") and not opts.get("head") and not opts.get("sort"):
         tail_n = opts["tail"]
         rows: list[dict] = []
         # Read row groups from the end
@@ -194,7 +218,8 @@ def _handle_parquet(path: str, opts: dict):
         _output_rows(rows, opts)
         return
 
-    limit = opts.get("head")
+    # Disable early-exit head optimization when --sort is present
+    limit = opts.get("head") if not opts.get("sort") else None
     rows = []
 
     if show_progress:
@@ -227,8 +252,7 @@ def _handle_parquet(path: str, opts: dict):
             if limit and len(rows) >= limit:
                 break
 
-    rows = _apply_head_tail(rows, opts)
-    _output_rows(rows, opts)
+    _finalize_rows(rows, opts)
 
 
 # --- ORC ---
@@ -261,8 +285,7 @@ def _handle_orc(path: str, opts: dict):
     n = len(rows_dict[keys[0]])
     rows = [{k: rows_dict[k][i] for k in keys} for i in range(n)]
 
-    rows = _apply_head_tail(rows, opts)
-    _output_rows(rows, opts)
+    _finalize_rows(rows, opts)
 
 
 # --- Avro ---
@@ -285,7 +308,8 @@ def _handle_avro(path: str, opts: dict):
         return
 
     col_filter = opts.get("columns")
-    limit = opts.get("head")
+    # Disable early-exit head optimization when --sort is present
+    limit = opts.get("head") if not opts.get("sort") else None
     rows: list[dict] = []
 
     if _should_show_progress():
@@ -307,8 +331,7 @@ def _handle_avro(path: str, opts: dict):
                 break
 
     f.close()
-    rows = _apply_head_tail(rows, opts)
-    _output_rows(rows, opts)
+    _finalize_rows(rows, opts)
 
 
 # --- JSONL ---
@@ -316,7 +339,8 @@ def _handle_avro(path: str, opts: dict):
 def _handle_jsonl(path: str, opts: dict):
     f = _open_file(path, "r", s3_endpoint=opts.get("s3_endpoint"))
     col_filter = opts.get("columns")
-    limit = opts.get("head")
+    # Disable early-exit head optimization when --sort is present
+    limit = opts.get("head") if not opts.get("sort") else None
 
     if opts.get("count"):
         count = sum(1 for line in f if line.strip())
@@ -361,8 +385,7 @@ def _handle_jsonl(path: str, opts: dict):
                 break
 
     f.close()
-    rows = _apply_head_tail(rows, opts)
-    _output_rows(rows, opts)
+    _finalize_rows(rows, opts)
 
 
 # --- CSV/TSV ---
@@ -386,7 +409,8 @@ def _handle_csv(path: str, opts: dict, delimiter: str = ","):
         f.close()
         return
 
-    limit = opts.get("head")
+    # Disable early-exit head optimization when --sort is present
+    limit = opts.get("head") if not opts.get("sort") else None
     rows: list[dict] = []
 
     if _should_show_progress():
@@ -408,8 +432,7 @@ def _handle_csv(path: str, opts: dict, delimiter: str = ","):
                 break
 
     f.close()
-    rows = _apply_head_tail(rows, opts)
-    _output_rows(rows, opts)
+    _finalize_rows(rows, opts)
 
 
 # --- Excel ---
@@ -472,8 +495,7 @@ def _handle_excel(path: str, opts: dict):
         wb.close()
         f.close()
 
-    rows = _apply_head_tail(rows, opts)
-    _output_rows(rows, opts)
+    _finalize_rows(rows, opts)
 
 
 # --- Feather / Arrow IPC ---
@@ -509,8 +531,7 @@ def _handle_feather(path: str, opts: dict):
     n = len(rows_dict[keys[0]])
     rows = [{k: rows_dict[k][i] for k in keys} for i in range(n)]
 
-    rows = _apply_head_tail(rows, opts)
-    _output_rows(rows, opts)
+    _finalize_rows(rows, opts)
 
 
 # --- JSON ---
@@ -538,8 +559,7 @@ def _handle_json(path: str, opts: dict):
     if col_filter:
         data = [{k: v for k, v in row.items() if k in col_filter} for row in data]
 
-    data = _apply_head_tail(data, opts)
-    _output_rows(data, opts)
+    _finalize_rows(data, opts)
 
 
 # --- Dispatcher ---
@@ -589,7 +609,8 @@ def _handle_with_file_obj(path: str, fmt: str, opts: dict, file_obj):
             print(count)
             return
 
-        limit = opts.get("head")
+        # Disable early-exit head optimization when --sort is present
+        limit = opts.get("head") if not opts.get("sort") else None
         rows: list[dict] = []
         if _should_show_progress():
             with _make_spinner_progress() as progress:
@@ -608,8 +629,7 @@ def _handle_with_file_obj(path: str, fmt: str, opts: dict, file_obj):
                 rows.append(record)
                 if limit and len(rows) >= limit:
                     break
-        rows = _apply_head_tail(rows, opts)
-        _output_rows(rows, opts)
+        _finalize_rows(rows, opts)
 
     elif fmt == "jsonl":
         text_f = io.TextIOWrapper(file_obj, encoding="utf-8")
@@ -620,7 +640,8 @@ def _handle_with_file_obj(path: str, fmt: str, opts: dict, file_obj):
             print(count)
             return
 
-        limit = opts.get("head")
+        # Disable early-exit head optimization when --sort is present
+        limit = opts.get("head") if not opts.get("sort") else None
         rows = []
         if _should_show_progress():
             with _make_spinner_progress() as progress:
@@ -655,8 +676,7 @@ def _handle_with_file_obj(path: str, fmt: str, opts: dict, file_obj):
                 rows.append(obj)
                 if limit and len(rows) >= limit:
                     break
-        rows = _apply_head_tail(rows, opts)
-        _output_rows(rows, opts)
+        _finalize_rows(rows, opts)
 
     elif fmt == "avro":
         import fastavro
@@ -670,7 +690,8 @@ def _handle_with_file_obj(path: str, fmt: str, opts: dict, file_obj):
             return
 
         col_filter = opts.get("columns")
-        limit = opts.get("head")
+        # Disable early-exit head optimization when --sort is present
+        limit = opts.get("head") if not opts.get("sort") else None
         rows = []
         if _should_show_progress():
             with _make_spinner_progress() as progress:
@@ -689,8 +710,7 @@ def _handle_with_file_obj(path: str, fmt: str, opts: dict, file_obj):
                 rows.append(record)
                 if limit and len(rows) >= limit:
                     break
-        rows = _apply_head_tail(rows, opts)
-        _output_rows(rows, opts)
+        _finalize_rows(rows, opts)
 
     elif fmt == "orc":
         import pyarrow.orc as orc
@@ -711,7 +731,6 @@ def _handle_with_file_obj(path: str, fmt: str, opts: dict, file_obj):
         keys = list(rows_dict.keys())
         n = len(rows_dict[keys[0]])
         rows = [{k: rows_dict[k][i] for k in keys} for i in range(n)]
-        rows = _apply_head_tail(rows, opts)
-        _output_rows(rows, opts)
+        _finalize_rows(rows, opts)
     else:
         raise ValueError(f"Unsupported format for file_obj streaming: {fmt}")

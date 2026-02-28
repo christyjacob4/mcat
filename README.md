@@ -69,6 +69,10 @@ mcat data.parquet --count        # Row count (instant for Parquet)
 mcat data.parquet --sample 10    # Random 10 rows
 mcat data.csv --sample 5 --format jsonl  # 5 random rows as JSONL
 mcat data.parquet --detect       # Print detected format
+mcat data.parquet --sort age           # Sort ascending by age
+mcat data.parquet --sort -age          # Sort descending by age
+mcat data.csv --sort "region,-sales"   # Multi-column sort
+mcat data.csv --sort name --head 10    # Sort + head
 ```
 
 Comparing two structured files:
@@ -139,6 +143,7 @@ PAGER="more" mcat data.parquet --pager   # use 'more' instead of 'less'
 | `--columns` | | Comma-separated column names |
 | `--sample` | | Random sample of N rows |
 | `--count` | `-c` | Print row count only |
+| `--sort` | | Sort by column(s), prefix with `-` for descending |
 | `--stats` | | Print column statistics summary |
 | `--diff` | | Compare two structured files side by side |
 | `--detect` | | Print detected format and exit |
