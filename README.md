@@ -1,6 +1,6 @@
 # 🐱 mcat
 
-> **cat on steroids** — a drop-in `cat` replacement that understands Parquet, Avro, ORC, CSV, JSONL, and remote sources.
+> **cat on steroids** — a drop-in `cat` replacement that understands Parquet, Avro, CSV, JSONL, and remote sources.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-green.svg)](https://python.org)
@@ -26,7 +26,7 @@ $ mcat sales_data.parquet
 
 ## Why mcat?
 
-`cat` is everywhere, but it can't read Parquet or Avro. The existing tools (`parquet-cli`, `avro-tools`) are heavy Java dependencies that take ages to install. `mcat` is a single `pip install` (or `uv tool install`) that just works — all GNU cat flags, plus structured format support and remote sources out of the box.
+`cat` is everywhere, but it can't read Parquet or Avro. The existing tools (`parquet-cli`, `avro-tools`) are heavy Java dependencies that take ages to install. `mcat` is a single `pip install` (or `uv tool install`) that just works -- all GNU cat flags, plus structured format support and remote sources out of the box.
 
 ---
 
@@ -161,17 +161,14 @@ PAGER="more" mcat data.parquet --pager   # use 'more' instead of 'less'
 | Format    | Extensions           | Features                          |
 |-----------|----------------------|-----------------------------------|
 | Parquet   | `.parquet`, `.pq`    | Stream row groups, schema inspect |
-| ORC       | `.orc`               | Stream stripes                    |
 | Avro      | `.avro`              | Stream blocks                         |
 | JSONL     | `.jsonl`, `.ndjson`  | Pretty-print each record          |
 | CSV       | `.csv`               | Table with headers                |
 | TSV       | `.tsv`               | Table with headers                |
 | Excel     | `.xlsx`, `.xls`      | First sheet                           |
-| Feather   | `.feather`           | Arrow Feather format              |
-| Arrow IPC | `.arrow`             | Arrow IPC streaming format        |
 | JSON      | `.json`              | Array of objects or single object |
 
-Formats are detected by extension first, then by magic bytes (`PAR1`, `ORC`, `Obj\x01`) as a fallback.
+Formats are detected by extension first, then by magic bytes (`PAR1`, `Obj\x01`) as a fallback.
 
 ## Output Formats
 

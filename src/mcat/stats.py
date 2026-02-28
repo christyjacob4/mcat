@@ -16,7 +16,6 @@ UNIQUE_CAP = 10_000
 
 
 def _fmt_num(val: Any) -> str:
-    """Format a number with thousands separators."""
     if val is None:
         return "—"
     if isinstance(val, float):
@@ -27,7 +26,6 @@ def _fmt_num(val: Any) -> str:
 
 
 def _supports_mean(type_str: str) -> bool:
-    """Check if a type supports mean computation."""
     t = type_str.upper()
     for kw in ("INT", "FLOAT", "DOUBLE", "DECIMAL", "NUM"):
         if kw in t:
@@ -44,7 +42,6 @@ def _print_stats_table(
     fmt: str | None = None,
     compression: str | None = None,
 ):
-    """Render the stats Rich table."""
     table = Table(
         title=f"Stats  {filename}  ({_fmt_num(total_rows)} rows · {total_cols} columns)",
         show_header=True,
@@ -66,10 +63,8 @@ def _print_stats_table(
         if null_count > 0 and total_rows > 0:
             pct = null_count / total_rows * 100
             null_str += f" ({pct:.1f}%)"
-
         mean_val = cs.get("mean")
         mean_str = _fmt_num(mean_val) if mean_val is not None else "—"
-
         unique = cs.get("unique")
         if unique is None:
             unique_str = "—"
@@ -77,7 +72,6 @@ def _print_stats_table(
             unique_str = f"{UNIQUE_CAP:,}+"
         else:
             unique_str = _fmt_num(unique)
-
         table.add_row(
             cs.get("name", ""),
             cs.get("type", ""),
@@ -88,10 +82,7 @@ def _print_stats_table(
             mean_str,
             unique_str,
         )
-
     console.print(table)
-
-    # Footer
     parts = []
     if file_size is not None:
         if file_size > 1_000_000_000:
@@ -107,12 +98,12 @@ def _print_stats_table(
     if compression:
         parts.append(f"compression: {compression}")
     if parts:
-        console.print(f"[dim]{' · '.join(parts)}[/dim]")
+        console.print(f"[dim]{chr(32)+chr(183)+chr(32).join(parts)}[/dim]")
 
 
 def stats_parquet(path: str, columns: list[str] | None = None, s3_endpoint: str | None = None):
-    """Compute stats from Parquet metadata (no data read)."""
-    import pyarrow.parquet as pq
+    """Compute stats from Parquet metadata using fastparquet."""
+    from fastparquet import ParquetFile
 
     if "://" in path:
         import fsspec
@@ -120,87 +111,66 @@ def stats_parquet(path: str, columns: list[str] | None = None, s3_endpoint: str 
         if s3_endpoint and path.startswith("s3://"):
             so["client_kwargs"] = {"endpoint_url": s3_endpoint}
         fs, fpath = fsspec.core.url_to_fs(path, **so)
-        pf = pq.ParquetFile(fs.open(fpath, "rb"))
+        pf = ParquetFile(fpath, fs=fs)
         file_size = fs.size(fpath)
     else:
-        pf = pq.ParquetFile(path)
+        pf = ParquetFile(path)
         file_size = os.path.getsize(path)
 
-    meta = pf.metadata
-    schema = pf.schema_arrow
-    total_rows = meta.num_rows
+    total_rows = pf.count()
 
-    # Build column index mapping
-    col_names = [schema.field(i).name for i in range(len(schema))]
-    col_types = [str(schema.field(i).type) for i in range(len(schema))]
+    # Use pf.dtypes for schema-based dtype discovery (no data read)
+    dtypes = pf.dtypes
+    col_names = list(dtypes.keys())
+    col_types = {name: str(dtype).upper() for name, dtype in dtypes.items()}
 
     if columns:
-        indices = [i for i, n in enumerate(col_names) if n in columns]
+        selected = [n for n in col_names if n in columns]
     else:
-        indices = list(range(len(col_names)))
+        selected = col_names
 
-    # Get compression from first column of first row group
-    compression = None
-    if meta.num_row_groups > 0 and meta.num_columns > 0:
-        compression = meta.row_group(0).column(0).compression
+    # Derive null counts from row group metadata
+    null_counts: dict[str, int] = {name: 0 for name in selected}
+    for rg in pf.row_groups:
+        for col_chunk in rg.columns:
+            path_parts = col_chunk.meta_data.path_in_schema
+            col_path = path_parts[0] if isinstance(path_parts, list) else path_parts
+            if col_path in null_counts:
+                stats = col_chunk.meta_data.statistics
+                if stats is not None:
+                    nc = stats.get("null_count") if isinstance(stats, dict) else getattr(stats, "null_count", None)
+                    if nc is not None:
+                        null_counts[col_path] += nc
 
     col_stats_list = []
-    for col_idx in indices:
-        stats_agg: list = []
-        null_total = 0
-        for rg in range(meta.num_row_groups):
-            rg_meta = meta.row_group(rg)
-            col_meta = rg_meta.column(col_idx)
-            if col_meta.statistics:
-                stats_agg.append(col_meta.statistics)
-                null_total += col_meta.statistics.null_count
-
+    for name in selected:
+        null_total = null_counts.get(name, 0)
         cs: dict[str, Any] = {
-            "name": col_names[col_idx],
-            "type": col_types[col_idx].upper(),
+            "name": name,
+            "type": col_types.get(name, "UNKNOWN"),
             "null_count": null_total,
             "non_null": total_rows - null_total,
         }
-
-        if stats_agg:
-            mins = [s.min for s in stats_agg if s.has_min_max]
-            maxs = [s.max for s in stats_agg if s.has_min_max]
-            if mins:
-                cs["min"] = min(mins)
-            if maxs:
-                cs["max"] = max(maxs)
-
-            # Distinct count from stats if available
-            distinct = [s.num_values for s in stats_agg]
-            # num_values is non-null count per RG, not unique — skip for unique
-
-        # Mean only for numeric types
         if _supports_mean(cs["type"]):
-            # Can't compute mean from metadata alone without reading data
             cs["mean"] = None
-
         col_stats_list.append(cs)
 
     _print_stats_table(
         os.path.basename(path),
         total_rows,
-        len(indices),
+        len(selected),
         col_stats_list,
         file_size=file_size,
         fmt="parquet",
-        compression=compression,
     )
 
 
 def stats_streaming(path: str, fmt: str, columns: list[str] | None = None, s3_endpoint: str | None = None, file_obj=None):
-    """Compute stats by streaming through the file (CSV, JSONL, Avro, ORC)."""
+    """Compute stats by streaming through the file (CSV, JSONL, Avro)."""
     import numbers
-
     file_size = None
     if "://" not in path and os.path.exists(path):
         file_size = os.path.getsize(path)
-
-    # Accumulators per column
     accum: dict[str, dict[str, Any]] = {}
     total_rows = 0
 
@@ -216,8 +186,6 @@ def stats_streaming(path: str, fmt: str, columns: list[str] | None = None, s3_en
             a["null_count"] += 1
             return
         a["non_null"] += 1
-
-        # Type detection
         if a["type"] is None:
             if isinstance(value, bool):
                 a["type"] = "BOOL"
@@ -229,8 +197,6 @@ def stats_streaming(path: str, fmt: str, columns: list[str] | None = None, s3_en
                 a["type"] = "STRING"
             else:
                 a["type"] = type(value).__name__.upper()
-
-        # Min/Max
         try:
             if a["min"] is None or value < a["min"]:
                 a["min"] = value
@@ -238,13 +204,9 @@ def stats_streaming(path: str, fmt: str, columns: list[str] | None = None, s3_en
                 a["max"] = value
         except TypeError:
             pass
-
-        # Mean accumulator for numeric
         if isinstance(value, numbers.Number) and not isinstance(value, bool):
             a["sum"] += float(value)
             a["num_count"] += 1
-
-        # Unique tracking
         if not a["unique_capped"]:
             try:
                 a["uniques"].add(value)
@@ -256,7 +218,6 @@ def stats_streaming(path: str, fmt: str, columns: list[str] | None = None, s3_en
     def _iter_rows():
         nonlocal file_obj
         from mcat.structured import _open_file
-
         if fmt == "csv" or fmt == "tsv":
             import csv as csv_mod
             delimiter = "\t" if fmt == "tsv" else ","
@@ -297,22 +258,6 @@ def stats_streaming(path: str, fmt: str, columns: list[str] | None = None, s3_en
                 yield record
             if not file_obj:
                 f.close()
-        elif fmt == "orc":
-            import pyarrow.orc as orc
-            if file_obj:
-                f = file_obj
-            else:
-                f = _open_file(path, "rb", s3_endpoint=s3_endpoint)
-            reader = orc.ORCFile(f)
-            table = reader.read()
-            rows_dict = table.to_pydict()
-            if rows_dict:
-                keys = list(rows_dict.keys())
-                n = len(rows_dict[keys[0]])
-                for i in range(n):
-                    yield {k: rows_dict[k][i] for k in keys}
-            if not file_obj:
-                f.close()
         elif fmt == "excel":
             is_xls = path.split("?")[0].split("#")[0].lower().endswith(".xls")
             if is_xls:
@@ -338,24 +283,6 @@ def stats_streaming(path: str, fmt: str, columns: list[str] | None = None, s3_en
                 wb.close()
                 if not file_obj:
                     f.close()
-        elif fmt in ("feather", "arrow"):
-            import pyarrow
-            import pyarrow.feather
-            import pyarrow.ipc
-            f = file_obj if file_obj else _open_file(path, "rb", s3_endpoint=s3_endpoint)
-            clean = path.split("?")[0].split("#")[0].lower()
-            if clean.endswith(".arrow") or fmt == "arrow":
-                table = pyarrow.ipc.open_stream(f).read_all()
-            else:
-                table = pyarrow.feather.read_table(f)
-            rows_dict = table.to_pydict()
-            if rows_dict:
-                keys = list(rows_dict.keys())
-                n = len(rows_dict[keys[0]])
-                for i in range(n):
-                    yield {k: rows_dict[k][i] for k in keys}
-            if not file_obj:
-                f.close()
         elif fmt == "json":
             import json
             if file_obj:
@@ -397,7 +324,6 @@ def stats_streaming(path: str, fmt: str, columns: list[str] | None = None, s3_en
                     continue
                 _update(k, v)
 
-    # Build stats list
     if columns:
         ordered_keys = [c for c in columns if c in accum]
     else:
@@ -420,7 +346,6 @@ def stats_streaming(path: str, fmt: str, columns: list[str] | None = None, s3_en
             cs["unique"] = UNIQUE_CAP + 1
         else:
             cs["unique"] = len(a["uniques"]) if a["uniques"] else None
-
         col_stats_list.append(cs)
 
     _print_stats_table(
@@ -434,7 +359,6 @@ def stats_streaming(path: str, fmt: str, columns: list[str] | None = None, s3_en
 
 
 def handle_stats(path: str, fmt: str, columns: list[str] | None = None, s3_endpoint: str | None = None, file_obj=None):
-    """Main entry point for --stats."""
     if fmt == "parquet" and file_obj is None:
         stats_parquet(path, columns=columns, s3_endpoint=s3_endpoint)
     else:
