@@ -65,6 +65,9 @@ mcat data.csv                    # CSV as table
 mcat data.jsonl --head 10        # First 10 records
 mcat data.parquet --schema       # Print schema only
 mcat data.parquet --columns name,age  # Select columns
+mcat data.parquet --grep "Smith"  # Rows where any column matches "Smith"
+mcat data.csv --grep "^A" --columns name  # Names starting with A
+mcat data.parquet --grep "2024" --format jsonl  # Rows mentioning 2024
 mcat data.parquet --count        # Row count (instant for Parquet)
 mcat data.parquet --sample 10    # Random 10 rows
 mcat data.csv --sample 5 --format jsonl  # 5 random rows as JSONL
@@ -141,6 +144,7 @@ PAGER="more" mcat data.parquet --pager   # use 'more' instead of 'less'
 | `--tail` | | Show last N rows |
 | `--schema` | | Print schema only |
 | `--columns` | | Comma-separated column names |
+| `--grep` | | Filter rows where any column matches pattern (regex) |
 | `--sample` | | Random sample of N rows |
 | `--count` | `-c` | Print row count only |
 | `--sort` | | Sort by column(s), prefix with `-` for descending |
