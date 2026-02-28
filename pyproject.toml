@@ -32,6 +32,7 @@ dependencies = [
     "xlrd",
     "zstandard",
     "lz4",
+    "duckdb>=0.9",
 ]
 
 [project.optional-dependencies]
