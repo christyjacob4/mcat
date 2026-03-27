@@ -5,13 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>mcat &mdash; cat on steroids</title>
   <meta name="description" content="A drop-in cat replacement that understands Parquet, CSV, JSONL, Avro, Excel, and remote sources. SQL queries, sorting, grep, diff, and more.">
+  <meta property="og:title" content="mcat — cat on steroids">
+  <meta property="og:description" content="A drop-in cat replacement that understands Parquet, CSV, JSONL, Avro, Excel, and remote sources. SQL queries, sorting, grep, diff, and more.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://christyjacob4.github.io/mcat/">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="mcat — cat on steroids">
+  <meta name="twitter:description" content="A drop-in cat replacement that understands Parquet, CSV, JSONL, Avro, Excel, and remote sources.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐱</text></svg>">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+  <a href="#features" class="skip-link">Skip to content</a>
+
   <nav class="navbar">
     <div class="nav-inner">
       <a href="#" class="nav-logo">mcat</a>
+      <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">&#9776;</button>
       <div class="nav-links">
         <a href="#features">Features</a>
         <a href="#demos">Demos</a>
@@ -35,7 +46,7 @@
         <img src="https://img.shields.io/github/stars/christyjacob4/mcat?style=flat" alt="GitHub Stars">
         <img src="https://img.shields.io/pypi/v/mcat?style=flat" alt="PyPI Version">
       </div>
-      <div class="install-cmd" onclick="navigator.clipboard.writeText('pip install mcat')">pip install mcat</div>
+      <div class="install-cmd" role="button" tabindex="0" aria-label="Copy install command: pip install mcat" onclick="copyInstall(this)" onkeydown="if(event.key==='Enter')copyInstall(this)">pip install mcat<span class="install-tooltip">Click to copy</span></div>
     </div>
 
     <!-- Features -->
@@ -78,27 +89,27 @@
     <!-- Install -->
     <section id="install" class="fade-up">
       <h2>Install</h2>
-      <div class="tabs">
-        <button class="tab-btn active" data-tab="pip">pip</button>
-        <button class="tab-btn" data-tab="uv">uv</button>
-        <button class="tab-btn" data-tab="brew">Homebrew</button>
-        <button class="tab-btn" data-tab="apt">apt</button>
+      <div class="tabs" role="tablist" aria-label="Installation methods">
+        <button class="tab-btn active" data-tab="pip" role="tab" aria-selected="true" aria-controls="tab-pip">pip</button>
+        <button class="tab-btn" data-tab="uv" role="tab" aria-selected="false" aria-controls="tab-uv">uv</button>
+        <button class="tab-btn" data-tab="brew" role="tab" aria-selected="false" aria-controls="tab-brew">Homebrew</button>
+        <button class="tab-btn" data-tab="apt" role="tab" aria-selected="false" aria-controls="tab-apt">apt</button>
       </div>
-      <div class="tab-content active" id="tab-pip">
+      <div class="tab-content active" id="tab-pip" role="tabpanel" aria-labelledby="tab-pip">
         <pre><code><span class="cmd">pip install</span> mcat</code></pre>
       </div>
-      <div class="tab-content" id="tab-uv">
+      <div class="tab-content" id="tab-uv" role="tabpanel" aria-labelledby="tab-uv">
         <pre><code><span class="comment"># Install uv first (if you don't have it)</span>
 <span class="cmd">curl</span> -LsSf https://astral.sh/uv/install.sh | sh
 
 <span class="comment"># Install mcat</span>
 <span class="cmd">uv tool install</span> mcat</code></pre>
       </div>
-      <div class="tab-content" id="tab-brew">
+      <div class="tab-content" id="tab-brew" role="tabpanel" aria-labelledby="tab-brew">
         <pre><code><span class="cmd">brew tap</span> christyjacob4/tap
 <span class="cmd">brew install</span> mcat</code></pre>
       </div>
-      <div class="tab-content" id="tab-apt">
+      <div class="tab-content" id="tab-apt" role="tabpanel" aria-labelledby="tab-apt">
         <pre><code><span class="comment"># Add the PPA</span>
 <span class="cmd">sudo add-apt-repository</span> ppa:christyjacob4/mcat
 <span class="cmd">sudo apt update</span>
@@ -184,7 +195,7 @@
           </div>
           <div class="terminal-body">
 <pre><span class="t-prompt">$</span> <span class="t-cmd">mcat <span class="t-flag">--stats</span> sales_data.parquet</span>
-<span class="t-header">Stats</span>  sales_data.parquet  (<span class="t-num">1,234,567</span> rows &middot; 6 columns)
+<span class="t-header">Stats</span>  sales_data.parquet  (<span class="t-num">1,234,567</span> rows &middot; 4 columns)
 
  <span class="t-header">Column</span>      <span class="t-header">Type</span>       <span class="t-header">Non-Null</span>    <span class="t-header">Null</span>    <span class="t-header">Min</span>         <span class="t-header">Max</span>          <span class="t-header">Mean</span>
  <span class="t-border">&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;</span>
@@ -306,12 +317,12 @@ echo "hello" | <span class="cmd">mcat</span></code></pre>
     <section id="auth" class="fade-up">
       <h2>Authentication</h2>
       <p style="color:var(--text-muted);margin-bottom:16px;font-family:var(--font-sans);">Zero-config auth &mdash; mcat uses credentials you've already set up for your cloud provider.</p>
-      <div class="tabs">
-        <button class="tab-btn active" data-tab="auth-aws">AWS S3</button>
-        <button class="tab-btn" data-tab="auth-s3compat">S3-Compatible</button>
-        <button class="tab-btn" data-tab="auth-gcs">Google Cloud</button>
+      <div class="tabs" role="tablist" aria-label="Authentication methods">
+        <button class="tab-btn active" data-tab="auth-aws" role="tab" aria-selected="true" aria-controls="tab-auth-aws">AWS S3</button>
+        <button class="tab-btn" data-tab="auth-s3compat" role="tab" aria-selected="false" aria-controls="tab-auth-s3compat">S3-Compatible</button>
+        <button class="tab-btn" data-tab="auth-gcs" role="tab" aria-selected="false" aria-controls="tab-auth-gcs">Google Cloud</button>
       </div>
-      <div class="tab-content active" id="tab-auth-aws">
+      <div class="tab-content active" id="tab-auth-aws" role="tabpanel" aria-labelledby="tab-auth-aws">
         <pre><code><span class="comment"># AWS CLI (recommended)</span>
 <span class="cmd">aws configure</span>
 mcat s3://my-bucket/data.parquet
@@ -324,7 +335,7 @@ mcat s3://my-bucket/data.parquet
 <span class="comment"># Named profile</span>
 AWS_PROFILE=prod mcat s3://my-bucket/data.parquet</code></pre>
       </div>
-      <div class="tab-content" id="tab-auth-s3compat">
+      <div class="tab-content" id="tab-auth-s3compat" role="tabpanel" aria-labelledby="tab-auth-s3compat">
         <pre><code><span class="comment"># Per-command endpoint</span>
 mcat <span class="flag">--s3-endpoint</span> https://play.min.io s3://mybucket/data.parquet
 
@@ -336,7 +347,7 @@ mcat s3://mybucket/data.parquet
 mcat <span class="flag">--s3-endpoint</span> https://&lt;account&gt;.r2.cloudflarestorage.com \
   s3://bucket/file.parquet</code></pre>
       </div>
-      <div class="tab-content" id="tab-auth-gcs">
+      <div class="tab-content" id="tab-auth-gcs" role="tabpanel" aria-labelledby="tab-auth-gcs">
         <pre><code><span class="comment"># gcloud CLI (recommended)</span>
 <span class="cmd">gcloud auth</span> application-default login
 mcat gs://my-bucket/data.parquet
@@ -360,13 +371,17 @@ mcat gs://my-bucket/data.parquet</code></pre>
   </div>
 
   <script>
-    // Tabs
+    // Tabs (with ARIA)
     document.querySelectorAll('.tabs').forEach(tabGroup => {
       tabGroup.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const tabId = btn.dataset.tab;
-          tabGroup.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+          tabGroup.querySelectorAll('.tab-btn').forEach(b => {
+            b.classList.remove('active');
+            b.setAttribute('aria-selected', 'false');
+          });
           btn.classList.add('active');
+          btn.setAttribute('aria-selected', 'true');
           const section = tabGroup.parentElement;
           section.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
           section.querySelector('#tab-' + tabId).classList.add('active');
@@ -374,19 +389,49 @@ mcat gs://my-bucket/data.parquet</code></pre>
       });
     });
 
-    // Copy buttons
+    // Install command copy
+    function copyInstall(el) {
+      const tooltip = el.querySelector('.install-tooltip');
+      navigator.clipboard.writeText('pip install mcat').then(() => {
+        tooltip.textContent = 'Copied!';
+        tooltip.classList.add('show');
+        setTimeout(() => {
+          tooltip.textContent = 'Click to copy';
+          tooltip.classList.remove('show');
+        }, 1500);
+      });
+    }
+
+    // Copy buttons on code blocks
     document.querySelectorAll('pre').forEach(pre => {
       if (pre.closest('.terminal-body')) return;
       const btn = document.createElement('button');
       btn.className = 'copy-btn';
       btn.textContent = 'Copy';
       btn.addEventListener('click', () => {
-        navigator.clipboard.writeText(pre.textContent).then(() => {
+        navigator.clipboard.writeText(pre.textContent.replace('Copy', '').trim()).then(() => {
           btn.textContent = 'Copied!';
-          setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+          btn.classList.add('copied');
+          setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
         });
       });
       pre.appendChild(btn);
+    });
+
+    // Mobile nav toggle
+    const navToggle = document.querySelector('.nav-toggle');
+    const navLinks = document.querySelector('.nav-links');
+    navToggle.addEventListener('click', () => {
+      const expanded = navToggle.getAttribute('aria-expanded') === 'true';
+      navToggle.setAttribute('aria-expanded', !expanded);
+      navLinks.classList.toggle('open');
+    });
+    // Close mobile nav on link click
+    navLinks.querySelectorAll('a').forEach(a => {
+      a.addEventListener('click', () => {
+        navLinks.classList.remove('open');
+        navToggle.setAttribute('aria-expanded', 'false');
+      });
     });
 
     // Scroll fade-in

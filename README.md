@@ -132,6 +132,7 @@ PAGER="more" mcat data.parquet --pager   # use 'more' instead of 'less'
 | `--sample` | | Random sample of N rows |
 | `--count` | `-c` | Print row count only |
 | `--sort` | | Sort by column(s), prefix with `-` for descending |
+| `--query` | | Filter with SQL WHERE clause (powered by DuckDB) |
 | `--stats` | | Print column statistics summary |
 | `--diff` | | Compare two structured files side by side |
 | `--detect` | | Print detected format and exit |
