@@ -49,8 +49,8 @@
       <h1><span class="hero-title">mcat</span></h1>
       <p class="hero-tagline">cat on steroids &mdash; reads Parquet, CSV, JSONL,<br>Avro, Excel, JSON and remote sources.</p>
       <div class="hero-actions">
-        <div class="install-cmd" role="button" tabindex="0" aria-label="Copy: pip install mcat" onclick="copyInstall(this)" onkeydown="if(event.key==='Enter')copyInstall(this)">
-          <span class="install-prompt">$</span>&nbsp;pip install mcat
+        <div class="install-cmd" role="button" tabindex="0" aria-label="Copy: uv tool install mcat" onclick="copyInstall(this)" onkeydown="if(event.key==='Enter')copyInstall(this)">
+          <span class="install-prompt">$</span>&nbsp;uv tool install mcat
           <span class="install-icon">&#10697;</span>
           <span class="install-tooltip">Click to copy</span>
         </div>
@@ -172,9 +172,9 @@
 <span class="t-border">┌─────┬────────┬─────────────┬─────────────────────────┐</span>
 <span class="t-border">│</span> <span class="t-header">Row</span> <span class="t-border">│</span> <span class="t-header">Status</span> <span class="t-border">│</span> <span class="t-header">name</span>        <span class="t-border">│</span> <span class="t-header">sales</span>                   <span class="t-border">│</span>
 <span class="t-border">├─────┼────────┼─────────────┼─────────────────────────┤</span>
-<span class="t-border">│</span> 0   <span class="t-border">│</span> <span class="t-changed">~</span>      <span class="t-border">│</span> Alice Chen  <span class="t-border">│</span> <span class="t-removed">94,230</span> &rarr; <span class="t-added">98,100</span>      <span class="t-border">│</span>
+<span class="t-border">│</span> 0   <span class="t-border">│</span> <span class="t-changed">~</span>      <span class="t-border">│</span> Alice Chen  <span class="t-border">│</span> <span class="t-removed">94,230</span><span class="t-border"> -&gt; </span><span class="t-added">98,100</span>      <span class="t-border">│</span>
 <span class="t-border">│</span> 1   <span class="t-border">│</span>        <span class="t-border">│</span> Bob Muller  <span class="t-border">│</span> 71,450                  <span class="t-border">│</span>
-<span class="t-border">│</span> 2   <span class="t-border">│</span> <span class="t-changed">~</span>      <span class="t-border">│</span> Carol Smith <span class="t-border">│</span> <span class="t-removed">88,920</span> &rarr; <span class="t-added">91,340</span>      <span class="t-border">│</span>
+<span class="t-border">│</span> 2   <span class="t-border">│</span> <span class="t-changed">~</span>      <span class="t-border">│</span> Carol Smith <span class="t-border">│</span> <span class="t-removed">88,920</span><span class="t-border"> -&gt; </span><span class="t-added">91,340</span>      <span class="t-border">│</span>
 <span class="t-border">│</span> 3   <span class="t-border">│</span> <span class="t-added">+</span>      <span class="t-border">│</span> <span class="t-added">Frank Lee</span>   <span class="t-border">│</span> <span class="t-added">55,200</span>                  <span class="t-border">│</span>
 <span class="t-border">└─────┴────────┴─────────────┴─────────────────────────┘</span>
 <span class="t-meta">1 unchanged &middot; <span class="t-changed">2 modified</span> &middot; <span class="t-added">1 added</span> &middot; <span class="t-removed">0 removed</span></span></pre>
@@ -202,15 +202,15 @@
       <div class="section-eyebrow">03 / Install</div>
       <h2>Up and running<br><em>in one command</em></h2>
       <div class="tabs" role="tablist" aria-label="Installation methods">
-        <button class="tab-btn active" data-tab="pip" role="tab" aria-selected="true" aria-controls="tab-pip">pip</button>
-        <button class="tab-btn" data-tab="uv" role="tab" aria-selected="false" aria-controls="tab-uv">uv</button>
+        <button class="tab-btn" data-tab="pip" role="tab" aria-selected="false" aria-controls="tab-pip">pip</button>
+        <button class="tab-btn active" data-tab="uv" role="tab" aria-selected="true" aria-controls="tab-uv">uv <span class="tab-recommended">recommended</span></button>
         <button class="tab-btn" data-tab="brew" role="tab" aria-selected="false" aria-controls="tab-brew">Homebrew</button>
         <button class="tab-btn" data-tab="apt" role="tab" aria-selected="false" aria-controls="tab-apt">apt</button>
       </div>
-      <div class="tab-content active" id="tab-pip" role="tabpanel" aria-labelledby="tab-pip">
+      <div class="tab-content" id="tab-pip" role="tabpanel" aria-labelledby="tab-pip">
         <pre><code><span class="cmd">pip install</span> mcat</code></pre>
       </div>
-      <div class="tab-content" id="tab-uv" role="tabpanel" aria-labelledby="tab-uv">
+      <div class="tab-content active" id="tab-uv" role="tabpanel" aria-labelledby="tab-uv">
         <pre><code><span class="comment"># Install uv first (if you don't have it)</span>
 <span class="cmd">curl</span> -LsSf https://astral.sh/uv/install.sh | sh
 
@@ -440,7 +440,7 @@ mcat gs://my-bucket/data.parquet</code></pre>
     function copyInstall(el) {
       const tooltip = el.querySelector('.install-tooltip');
       const icon = el.querySelector('.install-icon');
-      navigator.clipboard.writeText('pip install mcat').then(() => {
+      navigator.clipboard.writeText('uv tool install mcat').then(() => {
         tooltip.textContent = 'Copied!';
         tooltip.classList.add('show');
         icon.textContent = '\u2713';
