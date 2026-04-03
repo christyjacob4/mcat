@@ -9,10 +9,10 @@
   --border:      #1C2535;
   --border-subtle: #131C2A;
 
-  --accent:        #E09428;
-  --accent-bright: #F0A84A;
-  --accent-dim:    rgba(224, 148, 40, 0.10);
-  --accent-glow:   rgba(224, 148, 40, 0.18);
+  --accent:        #06B6D4;
+  --accent-bright: #22D3EE;
+  --accent-dim:    rgba(6, 182, 212, 0.10);
+  --accent-glow:   rgba(6, 182, 212, 0.18);
 
   --blue:    #4D9FFF;
   --blue-dim: rgba(77, 159, 255, 0.10);
@@ -26,8 +26,8 @@
   --muted:       #48596C;
   --muted-light: #677B90;
 
-  --font-display: 'Syne', sans-serif;
-  --font-body:    'Plus Jakarta Sans', sans-serif;
+  --font-display: 'Montserrat', sans-serif;
+  --font-body:    'Inter', sans-serif;
   --font-mono:    'JetBrains Mono', monospace;
 
   --r-sm: 6px;
@@ -146,11 +146,11 @@ a:hover { text-decoration: underline; }
   pointer-events: none;
 }
 
-/* Amber radial glow */
+/* Cyan radial glow */
 .hero-glow {
   position: absolute; top: -120px; left: 50%; transform: translateX(-50%);
   width: 960px; height: 640px;
-  background: radial-gradient(ellipse at 50% 20%, rgba(224,148,40,0.09) 0%, transparent 62%);
+  background: radial-gradient(ellipse at 50% 20%, rgba(6,182,212,0.07) 0%, transparent 62%);
   pointer-events: none;
 }
 
@@ -163,8 +163,8 @@ a:hover { text-decoration: underline; }
 /* Animated badge */
 .hero-badge {
   display: inline-flex; align-items: center; gap: 9px;
-  background: rgba(224,148,40,0.08);
-  border: 1px solid rgba(224,148,40,0.22);
+  background: rgba(6,182,212,0.08);
+  border: 1px solid rgba(6,182,212,0.22);
   border-radius: 20px; padding: 5px 16px 5px 11px;
   font-family: var(--font-body); font-size: 0.77rem; font-weight: 500;
   color: var(--accent-bright); margin-bottom: 32px; letter-spacing: 0.02em;
@@ -172,7 +172,7 @@ a:hover { text-decoration: underline; }
 .badge-dot {
   width: 7px; height: 7px; border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 8px var(--accent);
+  box-shadow: 0 0 7px var(--accent);
   animation: pulse-dot 2.4s ease infinite;
   flex-shrink: 0;
 }
@@ -192,9 +192,9 @@ a:hover { text-decoration: underline; }
   margin-bottom: 32px;
   background: linear-gradient(155deg,
     var(--text-bright) 0%,
-    var(--accent-bright) 35%,
-    var(--accent) 65%,
-    #B87020 100%);
+    var(--accent-bright) 40%,
+    var(--accent) 70%,
+    #0891B2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -235,7 +235,7 @@ a:hover { text-decoration: underline; }
 }
 .install-cmd:hover {
   border-color: var(--accent);
-  box-shadow: 0 0 0 1px rgba(224,148,40,0.15), 0 10px 28px rgba(224,148,40,0.10);
+  box-shadow: 0 0 0 1px rgba(6,182,212,0.15), 0 10px 28px rgba(6,182,212,0.10);
   transform: translateY(-1px);
 }
 .install-cmd:hover .install-icon { color: var(--accent); }
@@ -369,7 +369,7 @@ section h2 em {
   font-size: 0.82rem; font-weight: 500;
   color: var(--accent-bright);
   background: var(--accent-dim);
-  border: 1px solid rgba(224,148,40,0.18);
+  border: 1px solid rgba(6,182,212,0.18);
   border-radius: var(--r-sm);
   padding: 5px 11px;
   display: inline-block;
@@ -424,7 +424,7 @@ section h2 em {
   box-shadow:
     0 0 0 1px rgba(255,255,255,0.03),
     0 20px 60px rgba(0,0,0,0.45),
-    0 0 80px rgba(224,148,40,0.03);
+    0 0 80px rgba(6,182,212,0.04);
 }
 .terminal-titlebar {
   background: #0E131C;
@@ -545,7 +545,7 @@ pre code { background: none; padding: 0; color: inherit; }
   transition: border-color 0.2s, background 0.2s;
 }
 .example-card:hover {
-  border-color: rgba(224,148,40,0.28);
+  border-color: rgba(6,182,212,0.25);
   background: var(--card-hover);
 }
 .example-card h3 {
