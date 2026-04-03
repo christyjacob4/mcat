@@ -144,53 +144,54 @@
 
           <div class="demo-panel active" id="demo-parquet" role="tabpanel">
 <pre><span class="t-prompt">$</span> <span class="t-cmd typing-cmd">mcat sales_data.parquet</span>
-<span class="typing-output"><span class="t-border">┌─────────────┬──────────┬─────────┬───────────┐</span>
-<span class="t-border">│</span> <span class="t-header">name</span>        <span class="t-border">│</span> <span class="t-header">region</span>   <span class="t-border">│</span> <span class="t-header">sales</span>   <span class="t-border">│</span> <span class="t-header">quarter</span>   <span class="t-border">│</span>
-<span class="t-border">├─────────────┼──────────┼─────────┼───────────┤</span>
-<span class="t-border">│</span> Alice Chen  <span class="t-border">│</span> APAC     <span class="t-border">│</span> <span class="t-num">94,230</span>  <span class="t-border">│</span> Q1 2024   <span class="t-border">│</span>
-<span class="t-border">│</span> Bob Muller  <span class="t-border">│</span> EMEA     <span class="t-border">│</span> <span class="t-num">71,450</span>  <span class="t-border">│</span> Q1 2024   <span class="t-border">│</span>
-<span class="t-border">│</span> Carol Smith <span class="t-border">│</span> Americas <span class="t-border">│</span> <span class="t-num">88,920</span>  <span class="t-border">│</span> Q1 2024   <span class="t-border">│</span>
-<span class="t-border">│</span> David Park  <span class="t-border">│</span> APAC     <span class="t-border">│</span> <span class="t-num">102,100</span> <span class="t-border">│</span> Q2 2024   <span class="t-border">│</span>
-<span class="t-border">│</span> Eve Santos  <span class="t-border">│</span> Americas <span class="t-border">│</span> <span class="t-num">67,800</span>  <span class="t-border">│</span> Q2 2024   <span class="t-border">│</span>
-<span class="t-border">└─────────────┴──────────┴─────────┴───────────┘</span>
-<span class="t-meta">5 rows &middot; 4 columns &middot; parquet</span></span></pre>
+<span class="typing-output"><span class="t-border">┏━━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┓</span>
+<span class="t-border">┃</span> <span class="t-header">name</span>        <span class="t-border">┃</span> <span class="t-header">region</span>   <span class="t-border">┃</span>   <span class="t-header">sales</span> <span class="t-border">┃</span> <span class="t-header">quarter</span> <span class="t-border">┃</span>
+<span class="t-border">┡━━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━┩</span>
+<span class="t-border">│</span> Alice Chen  <span class="t-border">│</span> APAC     <span class="t-border">│</span>  <span class="t-num">94,230</span> <span class="t-border">│</span> Q1 2024 <span class="t-border">│</span>
+<span class="t-border">│</span> Bob Muller  <span class="t-border">│</span> EMEA     <span class="t-border">│</span>  <span class="t-num">71,450</span> <span class="t-border">│</span> Q1 2024 <span class="t-border">│</span>
+<span class="t-border">│</span> Carol Smith <span class="t-border">│</span> Americas <span class="t-border">│</span>  <span class="t-num">88,920</span> <span class="t-border">│</span> Q1 2024 <span class="t-border">│</span>
+<span class="t-border">│</span> David Park  <span class="t-border">│</span> APAC     <span class="t-border">│</span> <span class="t-num">102,100</span> <span class="t-border">│</span> Q2 2024 <span class="t-border">│</span>
+<span class="t-border">│</span> Eve Santos  <span class="t-border">│</span> Americas <span class="t-border">│</span>  <span class="t-num">67,800</span> <span class="t-border">│</span> Q2 2024 <span class="t-border">│</span>
+<span class="t-border">└─────────────┴──────────┴─────────┴─────────┘</span>
+<span class="t-meta">5 rows · 4 columns · parquet</span></span></pre>
           </div>
 
           <div class="demo-panel" id="demo-query" role="tabpanel">
 <pre><span class="t-prompt">$</span> <span class="t-cmd">mcat sales.parquet <span class="t-flag">--query</span> <span class="t-str">"sales &gt; 80000 AND region = 'APAC'"</span></span>
-<span class="t-border">┌─────────────┬──────────┬─────────┬───────────┐</span>
-<span class="t-border">│</span> <span class="t-header">name</span>        <span class="t-border">│</span> <span class="t-header">region</span>   <span class="t-border">│</span> <span class="t-header">sales</span>   <span class="t-border">│</span> <span class="t-header">quarter</span>   <span class="t-border">│</span>
-<span class="t-border">├─────────────┼──────────┼─────────┼───────────┤</span>
-<span class="t-border">│</span> Alice Chen  <span class="t-border">│</span> APAC     <span class="t-border">│</span> <span class="t-num">94,230</span>  <span class="t-border">│</span> Q1 2024   <span class="t-border">│</span>
-<span class="t-border">│</span> David Park  <span class="t-border">│</span> APAC     <span class="t-border">│</span> <span class="t-num">102,100</span> <span class="t-border">│</span> Q2 2024   <span class="t-border">│</span>
-<span class="t-border">└─────────────┴──────────┴─────────┴───────────┘</span>
-<span class="t-meta">2 rows &middot; 4 columns &middot; parquet</span></pre>
+<span class="t-border">┏━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┓</span>
+<span class="t-border">┃</span> <span class="t-header">name</span>       <span class="t-border">┃</span> <span class="t-header">region</span> <span class="t-border">┃</span>   <span class="t-header">sales</span> <span class="t-border">┃</span> <span class="t-header">quarter</span> <span class="t-border">┃</span>
+<span class="t-border">┡━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━┩</span>
+<span class="t-border">│</span> Alice Chen <span class="t-border">│</span> APAC   <span class="t-border">│</span>  <span class="t-num">94,230</span> <span class="t-border">│</span> Q1 2024 <span class="t-border">│</span>
+<span class="t-border">│</span> David Park <span class="t-border">│</span> APAC   <span class="t-border">│</span> <span class="t-num">102,100</span> <span class="t-border">│</span> Q2 2024 <span class="t-border">│</span>
+<span class="t-border">└────────────┴────────┴─────────┴─────────┘</span>
+<span class="t-meta">2 rows · 4 columns · parquet</span></pre>
           </div>
 
           <div class="demo-panel" id="demo-diff" role="tabpanel">
 <pre><span class="t-prompt">$</span> <span class="t-cmd">mcat <span class="t-flag">--diff</span> q1_sales.csv q2_sales.csv</span>
-<span class="t-border">┌─────┬────────┬─────────────┬─────────────────────────┐</span>
-<span class="t-border">│</span> <span class="t-header">Row</span> <span class="t-border">│</span> <span class="t-header">Status</span> <span class="t-border">│</span> <span class="t-header">name</span>        <span class="t-border">│</span> <span class="t-header">sales</span>                   <span class="t-border">│</span>
-<span class="t-border">├─────┼────────┼─────────────┼─────────────────────────┤</span>
-<span class="t-border">│</span> 0   <span class="t-border">│</span> <span class="t-changed">~</span>      <span class="t-border">│</span> Alice Chen  <span class="t-border">│</span> <span class="t-removed">94,230</span><span class="t-border"> -&gt; </span><span class="t-added">98,100</span>      <span class="t-border">│</span>
-<span class="t-border">│</span> 1   <span class="t-border">│</span>        <span class="t-border">│</span> Bob Muller  <span class="t-border">│</span> 71,450                  <span class="t-border">│</span>
-<span class="t-border">│</span> 2   <span class="t-border">│</span> <span class="t-changed">~</span>      <span class="t-border">│</span> Carol Smith <span class="t-border">│</span> <span class="t-removed">88,920</span><span class="t-border"> -&gt; </span><span class="t-added">91,340</span>      <span class="t-border">│</span>
-<span class="t-border">│</span> 3   <span class="t-border">│</span> <span class="t-added">+</span>      <span class="t-border">│</span> <span class="t-added">Frank Lee</span>   <span class="t-border">│</span> <span class="t-added">55,200</span>                  <span class="t-border">│</span>
+<span class="t-border">┏━━━━━┳━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━┓</span>
+<span class="t-border">┃</span> <span class="t-header">Row</span> <span class="t-border">┃</span> <span class="t-header">Status</span> <span class="t-border">┃</span> <span class="t-header">name</span>        <span class="t-border">┃</span> <span class="t-header">sales</span>                   <span class="t-border">┃</span>
+<span class="t-border">┡━━━━━╇━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━┩</span>
+<span class="t-border">│</span>   0 <span class="t-border">│</span> <span class="t-changed">~</span>      <span class="t-border">│</span> Alice Chen  <span class="t-border">│</span> <span class="t-removed">94,230</span> -&gt; <span class="t-added">98,100</span>          <span class="t-border">│</span>
+<span class="t-border">│</span>   1 <span class="t-border">│</span>        <span class="t-border">│</span> Bob Muller  <span class="t-border">│</span> 71,450                   <span class="t-border">│</span>
+<span class="t-border">│</span>   2 <span class="t-border">│</span> <span class="t-changed">~</span>      <span class="t-border">│</span> Carol Smith <span class="t-border">│</span> <span class="t-removed">88,920</span> -&gt; <span class="t-added">91,340</span>          <span class="t-border">│</span>
+<span class="t-border">│</span>   3 <span class="t-border">│</span> <span class="t-added">+</span>      <span class="t-border">│</span> Frank Lee   <span class="t-border">│</span> <span class="t-added">55,200</span>                   <span class="t-border">│</span>
 <span class="t-border">└─────┴────────┴─────────────┴─────────────────────────┘</span>
-<span class="t-meta">1 unchanged &middot; <span class="t-changed">2 modified</span> &middot; <span class="t-added">1 added</span> &middot; <span class="t-removed">0 removed</span></span></pre>
+<span class="t-meta">1 unchanged · <span class="t-changed">2 modified</span> · <span class="t-added">1 added</span> · <span class="t-removed">0 removed</span></span></pre>
           </div>
 
           <div class="demo-panel" id="demo-stats" role="tabpanel">
 <pre><span class="t-prompt">$</span> <span class="t-cmd">mcat <span class="t-flag">--stats</span> sales_data.parquet</span>
-<span class="t-header">Stats</span>  sales_data.parquet  (<span class="t-num">1,234,567</span> rows &middot; 4 columns)
-
- <span class="t-header">Column</span>      <span class="t-header">Type</span>       <span class="t-header">Non-Null</span>    <span class="t-header">Null</span>    <span class="t-header">Min</span>         <span class="t-header">Max</span>          <span class="t-header">Mean</span>
- <span class="t-border">&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;</span>
- name        <span class="t-type">STRING</span>     <span class="t-num">1,234,567</span>      0    Aaron       Zoe          &mdash;
- age         <span class="t-type">INT64</span>      <span class="t-num">1,230,000</span>  <span class="t-num">4,567</span>    18          94           <span class="t-num">36.4</span>
- salary      <span class="t-type">FLOAT64</span>    <span class="t-num">1,200,000</span> <span class="t-num">34,567</span>    <span class="t-num">22,000</span>      <span class="t-num">450,000</span>      <span class="t-num">87,432</span>
- region      <span class="t-type">STRING</span>     <span class="t-num">1,234,567</span>      0    APAC        EMEA         &mdash;
-<span class="t-meta">4.2 MB &middot; parquet &middot; compression: SNAPPY</span></pre>
+        Stats  sales_data.parquet  (<span class="t-num">1,234,567</span> rows · 4 columns)
+<span class="t-border">┏━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━┳━━━━━━━━━┳━━━━━━━━┓</span>
+<span class="t-border">┃</span> <span class="t-header">Column</span> <span class="t-border">┃</span> <span class="t-header">Type</span>    <span class="t-border">┃</span>  <span class="t-header">Non-Null</span> <span class="t-border">┃</span>   <span class="t-header">Null</span> <span class="t-border">┃</span>    <span class="t-header">Min</span> <span class="t-border">┃</span>     <span class="t-header">Max</span> <span class="t-border">┃</span>   <span class="t-header">Mean</span> <span class="t-border">┃</span>
+<span class="t-border">┡━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━╇━━━━━━━━━╇━━━━━━━━┩</span>
+<span class="t-border">│</span> name   <span class="t-border">│</span> <span class="t-type">STRING</span>  <span class="t-border">│</span> <span class="t-num">1,234,567</span>  <span class="t-border">│</span>      <span class="t-num">0</span> <span class="t-border">│</span>  Aaron <span class="t-border">│</span>     Zoe <span class="t-border">│</span>      - <span class="t-border">│</span>
+<span class="t-border">│</span> age    <span class="t-border">│</span> <span class="t-type">INT64</span>   <span class="t-border">│</span> <span class="t-num">1,230,000</span>  <span class="t-border">│</span>  <span class="t-num">4,567</span> <span class="t-border">│</span>     <span class="t-num">18</span> <span class="t-border">│</span>      <span class="t-num">94</span> <span class="t-border">│</span>   <span class="t-num">36.4</span> <span class="t-border">│</span>
+<span class="t-border">│</span> salary <span class="t-border">│</span> <span class="t-type">FLOAT64</span> <span class="t-border">│</span> <span class="t-num">1,200,000</span>  <span class="t-border">│</span> <span class="t-num">34,567</span> <span class="t-border">│</span> <span class="t-num">22,000</span> <span class="t-border">│</span> <span class="t-num">450,000</span> <span class="t-border">│</span> <span class="t-num">87,432</span> <span class="t-border">│</span>
+<span class="t-border">│</span> region <span class="t-border">│</span> <span class="t-type">STRING</span>  <span class="t-border">│</span> <span class="t-num">1,234,567</span>  <span class="t-border">│</span>      <span class="t-num">0</span> <span class="t-border">│</span>   APAC <span class="t-border">│</span>    EMEA <span class="t-border">│</span>      - <span class="t-border">│</span>
+<span class="t-border">└────────┴─────────┴───────────┴────────┴────────┴─────────┴────────┘</span>
+<span class="t-meta"> 4.2 MB · parquet · compression: SNAPPY</span></pre>
           </div>
 
         </div>
@@ -202,8 +203,8 @@
       <div class="section-eyebrow">03 / Install</div>
       <h2>Up and running<br><em>in one command</em></h2>
       <div class="tabs" role="tablist" aria-label="Installation methods">
-        <button class="tab-btn" data-tab="pip" role="tab" aria-selected="false" aria-controls="tab-pip">pip</button>
         <button class="tab-btn active" data-tab="uv" role="tab" aria-selected="true" aria-controls="tab-uv">uv <span class="tab-recommended">recommended</span></button>
+        <button class="tab-btn" data-tab="pip" role="tab" aria-selected="false" aria-controls="tab-pip">pip</button>
         <button class="tab-btn" data-tab="brew" role="tab" aria-selected="false" aria-controls="tab-brew">Homebrew</button>
         <button class="tab-btn" data-tab="apt" role="tab" aria-selected="false" aria-controls="tab-apt">apt</button>
       </div>
